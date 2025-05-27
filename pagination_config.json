@@ -1,0 +1,58 @@
+{
+  "featured-games": [
+    {
+      "left_column": {
+        "large": "asphalt-wings",
+        "small1": null,
+        "small2": null
+      },
+      "right_column": {
+        "large": "penguin-commander",
+        "small1": null,
+        "small2": null
+      }
+    },
+    {
+      "left_column": {
+        "large": "ninja-dojo-master",
+        "small1": null,
+        "small2": null
+      },
+      "right_column": {
+        "large": null,
+        "small1": null,
+        "small2": null
+      }
+    }
+  ],
+  "new-games": [
+    "asphalt-wings",
+    "penguin-commander",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "top-games": []
+}

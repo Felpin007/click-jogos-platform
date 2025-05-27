@@ -1,0 +1,211 @@
+/* --- Sidebar --- */
+.sidebar {
+    width: 120px;
+    border-right: 1px solid #eee;
+    background-color: #f9f9f9;
+    padding-right: 10px;
+}
+
+.sidebar ul li {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.sidebar ul li:last-child {
+    border-bottom: none;
+}
+
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    color: #d95c00;
+    font-weight: bold;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.sidebar ul li a:hover {
+    text-decoration: underline;
+}
+
+.sidebar .icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* --- Section Header --- */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.section-header h2 {
+    font-size: 14px;
+    color: #666;
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+}
+
+.section-header h2::before {
+     content: '';
+     display: inline-block;
+     width: 16px;
+     height: 16px;
+     border-radius: 50%;
+     margin-right: 8px;
+     position: relative;
+     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="white" stroke="%23ccc"/><circle cx="8" cy="8" r="5" fill="%23ccc"/><polygon points="7,5 12,8 7,11 7,9 5,9 5,7 7,7" fill="white"/></svg>');
+     background-repeat: no-repeat;
+     background-position: center center;
+     background-size: contain;
+     border: none;
+}
+
+.section-header .more-link {
+    font-size: 11px;
+    color: #999;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.section-header .more-link:hover {
+     color: #d95c00;
+     text-decoration: underline;
+}
+
+.section-header .more-link .plus-icon {
+     display: inline-block;
+     width: 12px;
+     height: 12px;
+     background-color: #ffae00;
+     color: #fff;
+     text-align: center;
+     line-height: 11px;
+     font-weight: bold;
+     margin-right: 3px;
+     border-radius: 2px;
+     font-size: 10px;
+}
+
+/* --- Game Item (General/Grid) --- */
+.game-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.game-grid .game-item {
+    display: flex;
+}
+
+.game-grid .game-info h3 {
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+ .game-grid .game-info h3 a {
+     color: red;
+     text-decoration: underline;
+     text-decoration-color: black;
+ }
+
+ .game-grid .game-info h3 a:hover {
+     color: #d95c00;
+     text-decoration-color: #d95c00;
+ }
+
+.game-grid .game-info p {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.3;
+}
+
+/* --- Tooltip --- */
+.tooltip-trigger {
+    position: relative;
+    display: inline-block;
+}
+
+ .tooltip-text {
+     visibility: hidden;
+     width: 140px;
+     background-color: #fff;
+     color: #333;
+     text-align: center;
+     border: 1px solid #ccc;
+     padding: 5px;
+     border-radius: 3px;
+     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+     position: absolute;
+     z-index: 1;
+     bottom: 110%;
+     left: 50%;
+     margin-left: -70px;
+     opacity: 0;
+     transition: opacity 0.3s;
+     font-size: 11px;
+     font-weight: bold;
+ }
+
+ .tooltip-trigger:hover .tooltip-text {
+     visibility: visible;
+     opacity: 1;
+ }
+
+/* --- Pagination --- */
+.featured-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.featured-pagination button {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 5px 15px;
+    margin: 0 10px;
+    font-size: 11px;
+    color: #666;
+    cursor: pointer;
+}
+
+ .featured-pagination button:hover {
+     background-color: #e0e0e0;
+ }
+
+ .featured-pagination button:disabled {
+    cursor: default;
+    opacity: 0.5;
+    background-color: #f0f0f0;
+ }
+
+.featured-pagination .dots {
+    display: flex;
+}
+
+.featured-pagination .dot {
+    width: 12px;
+    height: 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    margin: 0 3px;
+    cursor: pointer;
+}
+
+.featured-pagination .dot.active {
+    background-color: #ff9900;
+    border-color: #e68a00;
+}

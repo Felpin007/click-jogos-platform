@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Jogos - Jogos Online Grátis</title>
+    <link rel="stylesheet" href="static/css/base.css">
+    <link rel="stylesheet" href="static/css/layout.css">
+    <link rel="stylesheet" href="static/css/nav.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <link rel="stylesheet" href="static/css/index-page.css">
+</head>
+<body>
+<div id="site-wrapper">
+    <header class="top-bar">
+        <div class="left-links">
+            <img src="static/images/logo-uol.gif" alt="UOL" title="UOL">
+            <span>Assine 0800 703 3000</span>
+            <span>SAC</span>
+            <a href="#">Bate-papo</a>
+            <a href="#">E-mail</a>
+            <a href="#">Notícias</a>
+            <a href="#">Esporte</a>
+            <a href="#">Entretenimento</a>
+            <a href="#">Estilo</a>
+            <a href="#">Shopping</a>
+        </div>
+        <div class="right-search">
+            <input type="text" placeholder="">
+            <button>BUSCAR</button>
+        </div>
+    </header>
+
+    <div class="logo-search-area">
+        <div class="logo-section">
+            <div class="logo">
+                 <img src="static/images/logo.png" alt="Click Jogos Logo" style="display: block; max-width: 100%; height: auto;">
+            </div>
+        </div>
+        <div class="counter">
+            <span class="tooltip-number">8.130</span>
+            <div class="plus-one-button">+1</div>
+        </div>
+        <div class="game-search">
+            <label for="game-search-input">BUSCAR JOGOS:</label>
+            <div class="search-input-wrapper">
+                <input type="text" id="game-search-input">
+                <button>buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="#"><span class="icon home"></span></a></li>
+            <li><a href="#"><span class="icon"></span>Top Jogos</a></li>
+            <li><a href="#"><span class="icon"></span>Ação e Aventura</a></li>
+            <li><a href="#"><span class="icon"></span>Carros</a></li>
+            <li><a href="#"><span class="icon"></span>Esportes</a></li>
+            <li><a href="#"><span class="icon"></span>Puzzle</a></li>
+            <li><a href="#"><span class="icon"></span>Tiro</a></li>
+            <li><a href="#"><span class="icon"></span>Jogos de Meninas</a></li>
+            <li><a href="#"><span class="icon"></span>Download de Jogos</a></li>
+        </ul>
+        <div class="favorites">
+            <a href="#"><span class="icon-star">★</span> Meus Favoritos</a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="#"><img src="static/images/icons/icon_8.png" alt="Icon" class="icon">Meninas</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_13.png" alt="Icon" class="icon">Carros</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_29.png" alt="Icon" class="icon">Motos</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_34.png" alt="Icon" class="icon">Futebol</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_14.png" alt="Icon" class="icon">Corrida</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_30.png" alt="Icon" class="icon">Mario</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_81.png" alt="Icon" class="icon">Premium</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_11.png" alt="Icon" class="icon">Luta</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_2.png" alt="Icon" class="icon">Clássicos</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_31.png" alt="Icon" class="icon">Bob Esponja</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_41.png" alt="Icon" class="icon">Guerra</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_23.png" alt="Icon" class="icon">Sinuca</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_3.png" alt="Icon" class="icon">Agilidade</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_6.png" alt="Icon" class="icon">Estratégia</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_10.png" alt="Icon" class="icon">Plataforma</a></li>
+                <li><a href="#"><img src="static/images/icons/icon_24.png" alt="Icon" class="icon">Sonic</a></li>
+            </ul>
+        </aside>
+
+        <main class="content-area">
+            <section class="featured-games">
+                <div class="section-header">
+                    <h2>Jogos em Destaque</h2>
+                    <a href="#" class="more-link"><span class="plus-icon">+</span>Mais Jogos Populares</a>
+                </div>
+
+                <div id="featured-games-container" class="featured-columns">
+                </div>
+
+                <div class="featured-pagination">
+                    <button id="prevBtn" disabled>◀ anterior</button>
+                    <div id="featured-dots-container" class="dots">
+                        <span class="dot active" data-index="0"></span>
+                        <span class="dot" data-index="1"></span>
+                        <span class="dot" data-index="2"></span>
+                        <span class="dot" data-index="3"></span>
+                        <span class="dot" data-index="4"></span>
+                    </div>
+                    <button id="nextBtn" disabled>próxima ▶</button>
+                </div>
+            </section>
+
+            <section class="newest-games">
+                 <div class="section-header" style="margin-top: 25px;">
+                    <h2>Jogos Online Mais Novos</h2>
+                    <a href="#" class="more-link"><span class="plus-icon">+</span>Mais Jogos Novos</a>
+                </div>
+                <div id="newest-games-container" class="game-grid">
+                </div>
+            </section>
+
+            <section class="top-games">
+                 <div class="section-header">
+                    <h2>Top Jogos</h2>
+                    <div style="display: flex; align-items: center;">
+                         <a href="#" class="more-link" style="margin-right: 10px; color: #d95c00;">Top Jogos</a>
+                         <a href="#" class="more-link"><span class="plus-icon">+</span>Todos</a>
+                     </div>
+                </div>
+                <div id="top-games-container" class="game-grid">
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+</div>
+
+<script src="static/js/games.js"></script>
+<script src="static/js/script.js"></script>
+
+</body>
+</html>

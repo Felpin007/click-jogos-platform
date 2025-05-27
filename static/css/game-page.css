@@ -1,0 +1,380 @@
+.game-page-content {
+    padding: 15px 10px;
+}
+
+.game-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.game-header h1 {
+    font-size: 20px;
+    color: #d95c00;
+    font-weight: normal;
+    margin: 0;
+}
+
+#game-title {
+    color: #e10000;
+    font-size: 18px;
+    font-weight: bold;
+    font-family: "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+    text-decoration: none;
+}
+
+.game-header .breadcrumbs {
+    font-size: 11px;
+    color: #666;
+}
+
+.game-header .breadcrumbs a {
+    color: #d95c00;
+    text-decoration: none;
+}
+.game-header .breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+
+.game-details-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.game-description {
+    flex-basis: 65%;
+    padding-right: 15px;
+}
+
+.game-description h2 {
+}
+
+.game-controls h2 {
+    font-family: "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+    color: #e10000;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.game-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: #333;
+}
+
+.game-toolbar .toolbar-left,
+.game-toolbar .toolbar-right {
+    display: flex;
+    align-items: center;
+}
+
+.game-toolbar a {
+    text-decoration: underline;
+    color: #666;
+    margin-left: 15px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.game-toolbar a:hover {
+    color: #d95c00;
+}
+
+.game-toolbar .fav-label {
+    font-weight: bold;
+    color: #e10000;
+    margin-right: 5px;
+}
+
+.game-toolbar .fav-add {
+    margin-left: 5px;
+}
+
+.game-toolbar .icon-star-add,
+.game-toolbar .icon-zoom-out,
+.game-toolbar .icon-zoom-in,
+.game-toolbar .icon-fullscreen {
+    margin-right: 3px;
+    font-size: 14px;
+}
+
+.game-toolbar .icon-star-add { color: #ffc107; }
+.game-toolbar .icon-zoom-out,
+.game-toolbar .icon-zoom-in { color: #007bff; }
+.game-toolbar .icon-fullscreen { color: #007bff; }
+
+
+.game-description p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.age-rating {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.rating-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #00a651;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 8px;
+    border-radius: 2px;
+    text-align: center;
+    line-height: 24px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.rating-text {
+    font-size: 12px;
+    color: #333;
+}
+
+.age-rating.rating-l .rating-icon { background-color: #00a651; }
+.age-rating.rating-10 .rating-icon { background-color: #007bff; font-size: 12px; }
+.age-rating.rating-12 .rating-icon { background-color: #ffc107; color: #333; font-size: 12px; }
+.age-rating.rating-14 .rating-icon { background-color: #fd7e14; font-size: 12px; }
+.age-rating.rating-16 .rating-icon { background-color: #dc3545; font-size: 12px; }
+.age-rating.rating-18 .rating-icon { background-color: #343a40; font-size: 12px; }
+
+
+.social-share button {
+    padding: 5px 10px;
+    margin-right: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.social-share .twitter {
+    background-color: #55acee;
+    color: white;
+    border-color: #55acee;
+}
+.social-share .facebook {
+    background-color: #3b5998;
+    color: white;
+    border-color: #3b5998;
+}
+
+
+.game-controls {
+    flex-basis: 30%;
+    border-left: 1px solid #eee;
+    padding-left: 15px;
+}
+
+.game-controls p {
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #333;
+}
+.game-controls p span {
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 1px 4px;
+    margin-right: 5px;
+    background-color: #fff;
+    min-width: 40px;
+    text-align: center;
+    font-weight: bold;
+}
+
+
+.game-embed-container {
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: #f0f0f0;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    min-height: 610px;
+}
+
+.game-embed-container iframe {
+    display: block;
+    border: 1px solid #bbb;
+    visibility: hidden;
+}
+
+#loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#loading-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../jogos/Asphalt-Wings/capa.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.4;
+    z-index: 11;
+}
+
+#progress-bar-container {
+    width: 60%;
+    height: 20px;
+    background-color: #555;
+    border: 1px solid #888;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    z-index: 12;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3) inset;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #d95c00;
+    background-image: linear-gradient(to bottom, #fca40c, #fb6b04);
+    border-radius: 10px 0 0 10px;
+    transition: width 0.2s ease-out;
+}
+
+.exit-fullscreen-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2147483647;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+}
+
+.game-embed-container.is-fullscreen .exit-fullscreen-button {
+    display: block;
+}
+
+
+.game-page-categories,
+.game-page-recommended {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+}
+
+.game-page-categories .section-header h2::before,
+.game-page-recommended .section-header h2::before {
+     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="white" stroke="%23ccc"/><circle cx="8" cy="8" r="5" fill="%23ccc"/><polygon points="6,4 11,8 6,12" fill="white"/></svg>');
+}
+
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 20px;
+    padding-top: 10px;
+}
+
+.category-grid a {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    color: #d95c00;
+    font-weight: bold;
+    text-decoration: none;
+}
+.category-grid a:hover {
+    text-decoration: underline;
+}
+.category-grid img {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    vertical-align: middle;
+    border: 1px dashed #ccc;
+    background-color: #eee;
+}
+
+.recommended-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    padding-top: 10px;
+}
+
+.recommended-grid .game-item {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 5px;
+}
+
+.recommended-grid .game-image.medium {
+    width: 100%;
+    height: 120px;
+    background-color: #e0e0e0;
+    border: none;
+    margin-right: 0;
+    margin-bottom: 5px;
+    display: flex; align-items: center; justify-content: center; color: #666; font-size: 10px;
+}
+
+.recommended-grid .game-info {
+    text-align: center;
+}
+
+.recommended-grid .game-info h3 {
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+.recommended-grid .game-info h3 a {
+    color: red;
+    text-decoration: underline;
+    text-decoration-color: black;
+    font-weight: bold;
+}
+.recommended-grid .game-info h3 a:hover {
+    color: #d95c00;
+    text-decoration-color: #d95c00;
+}
+.recommended-grid .game-info p {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.3;
+}

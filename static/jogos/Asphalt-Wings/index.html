@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrida Infinita 3D</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="score">Pontuação: 0</div>
+    <div id="clock">Time: 08:00</div>
+    <div id="powerup-indicator" style="display: none;">🚀</div>
+
+    <div id="speedometer-container">
+        <div id="speedometer-dial">
+            <div class="tick major-tick" style="transform: rotate(-90deg) translateY(-80px);"></div>
+            <div class="tick minor-tick" style="transform: rotate(-67.5deg) translateY(-82px);"></div>
+            <div class="tick major-tick" style="transform: rotate(-45deg) translateY(-80px);"></div>
+            <div class="tick minor-tick" style="transform: rotate(-22.5deg) translateY(-82px);"></div>
+            <div class="tick major-tick" style="transform: rotate(0deg) translateY(-80px);"></div>
+            <div class="tick minor-tick" style="transform: rotate(22.5deg) translateY(-82px);"></div>
+            <div class="tick major-tick" style="transform: rotate(45deg) translateY(-80px);"></div>
+            <div class="tick minor-tick" style="transform: rotate(67.5deg) translateY(-82px);"></div>
+            <div class="tick major-tick" style="transform: rotate(90deg) translateY(-80px);"></div>
+        </div>
+        <div id="speedometer-needle"></div>
+        <div id="speedometer-label">KM/H</div>
+        <div id="speedometer-text">80 km/h</div>
+    </div>
+
+    <div id="nitro-container">
+        <div id="nitro-label">NITRO</div>
+        <div id="nitro-bar-background">
+            <div id="nitro-bar-fill"></div>
+        </div>
+    </div>
+
+    <div id="game-over" style="display: none;">
+        <h1>FIM DE JOGO!</h1>
+        <p>Pontuação Final: <span id="final-score">0</span></p>
+        <button id="restart-button">Reiniciar</button>
+    </div>
+
+    <div id="pause-menu" class="overlay" style="display: none;">
+        <div class="overlay-content">
+            <h2>Jogo Pausado</h2>
+            <div class="setting">
+                <label for="camera-animations-toggle">Animações da Câmera:</label>
+                <input type="checkbox" id="camera-animations-toggle">
+            </div>
+            <button id="resume-button">Continuar</button>
+        </div>
+    </div>
+
+    <div id="crosshair" style="display: none;"></div>
+    <script type="module" src="game.js"></script>
+</body>
+</html>

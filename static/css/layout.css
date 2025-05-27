@@ -1,0 +1,244 @@
+#site-wrapper {
+    width: 990px;
+    margin: 0 auto;
+    background-color: #fff;
+}
+
+.top-bar {
+    background-color: #363636;
+    color: #ccc;
+    padding: 2px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    border-top: 1px solid white;
+    border-bottom: 1px solid white;
+}
+
+.top-bar .left-links,
+.top-bar .right-links { 
+    display: flex;
+    align-items: center;
+}
+
+.top-bar .left-links img {
+    height: 15px;
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+ .top-bar .left-links span {
+     margin-right: 15px;
+     font: 11px / 29px Arial;
+     color: #ccc;
+     text-decoration: none;
+ }
+
+ .top-bar .left-links a {
+     margin-right: 15px;
+     font: bold 14px / 28px Arial !important;
+     color: #FFF !important;
+     text-decoration: none;
+ }
+
+ .top-bar .left-links a:hover {
+     color: #fff;
+     text-decoration: none;
+ }
+
+.top-bar .right-search input[type="text"] {
+    padding: 3px 5px;
+    border: 1px solid #666;
+    background-color: #fff;
+    font-size: 11px;
+    border-radius: 3px;
+    width: 150px;
+    vertical-align: middle;
+    padding-left: 20px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"><path fill="%23888" d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: 5px center;
+    background-size: 12px 12px;
+}
+
+.top-bar .right-search button {
+    padding: 3px 8px;
+    background-color: #FFF;
+    border: 1px solid #777;
+    color: #333;
+    font-size: 11px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.top-bar .right-search button:hover {
+    background-color: #777;
+}
+
+/* --- Logo/Search Area --- */
+.logo-search-area {
+    background-color: #2e2e2e;
+     background-image:
+         linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.3)),
+         repeating-linear-gradient(
+             45deg,
+             #505050,
+             #505050 2px,
+             #5a5a5a 2px,
+             #5a5a5a 3px
+         );
+    padding: 0px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #6a6a6a;
+    position: relative;
+}
+
+.logo-search-area .logo-section {
+    display: flex;
+    align-items: flex-end;
+}
+
+.logo-search-area .logo {
+     width: 300px;
+     height: 80px;
+     background: none;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     margin-right: 15px;
+}
+
+.logo-search-area .counter {
+    position: relative;
+    padding-top: 30px;
+    width: auto;
+    border: none;
+    background: none;
+    text-align: center;
+}
+
+.logo-search-area .counter .tooltip-number {
+    position: absolute;
+    bottom: calc(100% - 35px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 8px 8px;
+    border-radius: 2px;
+    font-weight: normal;
+    font-size: 12px;
+    color: #777;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    z-index: 10;
+    min-width: 50px;
+    text-align: center;
+}
+
+.logo-search-area .counter .tooltip-number::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -4px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+}
+
+.logo-search-area .counter .plus-one-button {
+    background-color: #fff;
+    color: #4c8ef1;
+    font-weight: 900;
+    padding: 1px 6px 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-style: italic;
+    display: inline-block;
+    border: 1px solid #ccc;
+    position: relative;
+    overflow: hidden;
+    padding-top: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    min-width: 50px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.logo-search-area .counter .plus-one-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to right,
+        #d13c31 0%, #d13c31 25%,
+        #4a8af4 25%, #4a8af4 50%,
+        #67a74e 50%, #67a74e 75%,
+        #f6d752 75%, #f6d752 100%
+    );
+}
+
+.logo-search-area .game-search {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.logo-search-area .game-search label {
+    display: inline-block;
+    font-size: 11px;
+    color: #eee;
+    background-color: #605c5c;
+    padding: 8px 8px 5px 8px;
+    margin-bottom: 0;
+    text-transform: uppercase;
+    font-weight: bold;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.logo-search-area .search-input-wrapper {
+    display: flex;
+    border-top: none;
+    background-color: #605c5c;
+    padding: 8px 8px 8px 8px;
+    height: auto;
+    width: auto;
+    min-width: 470px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.logo-search-area .game-search input[type="text"] {
+    padding: 5px 8px;
+    border: none;
+    flex-grow: 1;
+    font-size: 12px;
+    outline: none;
+    height: 23px;
+    line-height: 18px;
+}
+
+.logo-search-area .game-search button {
+    padding: 0 15px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #555;
+    font-weight: normal;
+    font-size: 12px;
+    cursor: pointer;
+    text-transform: lowercase;
+    height: 23px;
+    line-height: 18px;
+    border-radius: 2px;
+}
+
+ .logo-search-area .game-search button:hover {
+    background-color: #f0f0f0;
+ }

@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ninja Dojo Master</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        canvas {
+            background-color: #333;
+            border: 2px solid #666;
+            image-rendering: pixelated;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        // Configuração do canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const GAME_WIDTH = 800;
+        const GAME_HEIGHT = 600;
+        const TILE_SIZE = 16;
+        
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        
+        // Configuração de áudio
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        
+        // Configuração de câmera
+        const camera = {
+            x: 0,
+            y: 0,
+            shake: 0,
+            shakeAmount: 0,
+            zoom: 1,
+            targetZoom: 1
+        };
+        
+        // Variáveis globais do jogo
+        let player;
+        let enemies = [];
+        let deadBodies = [];
+        let bloodSplats = [];
+        let gameTime = 0;
+        let score = 0;
+        let lastEnemySpawn = 0;
+        let powerUps = [];
+        let lastPowerUpSpawn = 0;
+        let bgMusic;
+        let spectators = [];
+        
+        // Configuração de música
+        function createBgMusic() {
+            const musicGain = audioCtx.createGain();
+            musicGain.gain.value = 0.2;
+            
+            // Oscilador base
+            const baseOsc = audioCtx.createOscillator();
+            baseOsc.type = 'triangle';
+            baseOsc.frequency.value = 220; // A3
+            
+            // LFO para modulação da frequência
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.1;
+            
+            // Gain node para LFO
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 3;
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(baseOsc.frequency);
+            
+            // Filtro para dar mais corpo ao som
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 800;
+            filter.Q.value = 5;
+            
+            baseOsc.connect(filter);
+            filter.connect(musicGain);
+            musicGain.connect(audioCtx.destination);
+            
+            // Iniciar osciladores
+            baseOsc.start();
+            lfo.start();
+            
+            // Programar variações na música
+            setInterval(() => {
+                const note = Math.floor(Math.random() * 5);
+                const freq = 220 * Math.pow(1.05946, note); // A escala pentatônica
+                baseOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                baseOsc.frequency.exponentialRampToValueAtTime(
+                    freq * 0.99, audioCtx.currentTime + 0.5
+                );
+            }, 2000);
+            
+            // Retornar para controlar o volume depois
+            return musicGain;
+        }
+        
+        // Funções de áudio para efeitos sonoros
+        function playSound(type, freq = 440, duration = 0.1, volume = 0.15) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.value = freq;
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            gainNode.gain.value = volume;
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+        
+        function playSwordSound() {
+            playSound('sawtooth', 660, 0.1, 0.15);
+            setTimeout(() => playSound('sawtooth', 880, 0.05, 0.15), 50);
+        }
+        
+        function playDashSound() {
+            playSound('sine', 220, 0.3, 0.1);
+            
+            // Adicionar efeito de vento
+            const noise = audioCtx.createOscillator();
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+            
+            noise.type = 'sawtooth';
+            noise.frequency.value = 100;
+            
+            filter.type = 'bandpass';
+            filter.frequency.value = 800;
+            filter.Q.value = 0.7;
+            
+            gain.gain.value = 0.05;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            noise.start();
+            noise.stop(audioCtx.currentTime + 0.3);
+        }
+        
+        function playPowerUpSound() {
+            // Sequência de notas ascendentes
+            playSound('sine', 440, 0.1, 0.1);
+            setTimeout(() => playSound('sine', 554, 0.1, 0.1), 100);
+            setTimeout(() => playSound('sine', 659, 0.1, 0.1), 200);
+            setTimeout(() => playSound('sine', 880, 0.2, 0.1), 300);
+        }
+        
+        function playHitSound() {
+            playSound('square', 110, 0.1, 0.15);
+            setTimeout(() => playSound('square', 100, 0.1, 0.15), 30);
+        }
+        
+        function playArrowSound() {
+            playSound('sine', 550, 0.05, 0.1);
+            setTimeout(() => playSound('sine', 500, 0.05, 0.1), 50);
+        }
+        
+        function playDeathSound() {
+            playSound('sawtooth', 150, 0.3, 0.2);
+            setTimeout(() => playSound('triangle', 100, 0.5, 0.15), 100);
+            
+            // Efeito de câmera tremendo
+            camera.shake = 10;
+            camera.shakeAmount = 5;
+        }
+        
+        // Classes
+        class Sprite {
+            constructor(x, y, width, height, color) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+                this.speed = 0;
+                this.health = 100;
+                this.isAlive = true;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
+            }
+            
+            update() {
+                // Implementar na subclasse
+            }
+            
+            isCollidingWith(other) {
+                return (
+                    this.x < other.x + other.width &&
+                    this.x + this.width > other.x &&
+                    this.y < other.y + other.height &&
+                    this.y + this.height > other.y
+                );
+            }
+        }
+        
+        class DashTrail {
+            constructor(x, y, width, height, dirX, dirY, color) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.dirX = dirX;
+                this.dirY = dirY;
+                this.color = color;
+                this.alpha = 0.8;
+                this.life = 10; // Duração do rastro em frames
+            }
+            
+            update() {
+                this.life--;
+                this.alpha = this.life / 10;
+                return this.life <= 0;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                
+                // Desenhar ninja levemente esticado na direção do movimento
+                const stretch = 1.2;
+                const shrink = 0.9;
+                
+                if (Math.abs(this.dirX) > Math.abs(this.dirY)) {
+                    // Movimento horizontal - esticar horizontalmente
+                    const newWidth = this.width * (this.dirX > 0 ? stretch : stretch);
+                    const newHeight = this.height * shrink;
+                    const offsetX = this.dirX > 0 ? 0 : (this.width - newWidth);
+                    
+                    this.drawNinjaBody(this.x + offsetX - camera.x, this.y - camera.y, newWidth, newHeight, this.color, true);
+                } else {
+                    // Movimento vertical - esticar verticalmente
+                    const newWidth = this.width * shrink;
+                    const newHeight = this.height * (this.dirY > 0 ? stretch : stretch);
+                    const offsetY = this.dirY > 0 ? 0 : (this.height - newHeight);
+                    
+                    this.drawNinjaBody(this.x - camera.x, this.y + offsetY - camera.y, newWidth, newHeight, this.color, false);
+                }
+                
+                ctx.restore();
+            }
+            
+            drawNinjaBody(x, y, width, height, color, isHorizontal) {
+                // Corpo básico
+                const headSize = Math.min(width, height) * 0.4;
+                const bodyWidth = isHorizontal ? width * 0.7 : width * 0.5;
+                const bodyHeight = isHorizontal ? height * 0.5 : height * 0.7;
+                
+                // Efeito de rastro com gradiente
+                const gradient = ctx.createLinearGradient(
+                    x - this.dirX * 10, 
+                    y - this.dirY * 10, 
+                    x + this.dirX * 10, 
+                    y + this.dirY * 10
+                );
+                
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+                gradient.addColorStop(0.5, this.color);
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                
+                // Corpo principal com efeito de movimento
+                ctx.fillRect(x + (width - bodyWidth) / 2, y + headSize, bodyWidth, bodyHeight);
+                
+                // Cabeça
+                ctx.fillRect(x + (width - headSize) / 2, y + headSize * 0.5, headSize, headSize);
+            }
+        }
+        
+        class Player extends Sprite {
+            constructor(x, y) {
+                super(x, y, TILE_SIZE, TILE_SIZE, 'white');
+                this.speed = 3;
+                this.dashSpeed = 15;
+                this.dashDuration = 10;
+                this.dashCooldown = 0;
+                this.dashMaxCooldown = 12; // Reduzido para dash mais frequente
+                this.dashMaxDistance = 150; // Distância máxima do dash
+                this.dashing = false;
+                this.dashFrame = 0;
+                this.dashDirectionX = 0;
+                this.dashDirectionY = 0;
+                this.dashTargetX = 0;
+                this.dashTargetY = 0;
+                this.invulnerable = 0;
+                this.facing = { x: 0, y: 1 }; // direção padrão: para baixo
+                this.animationFrame = 0;
+                this.dashTrails = [];
+                this.superDashMode = false;
+                this.superDashTime = 0;
+                this.shadowOffset = 0;
+                this.attackFrame = 0;
+            }
+            
+            draw() {
+                // Desenhar sombra
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(
+                    this.x + this.width/2 - camera.x, 
+                    this.y + this.height - 2 - camera.y, 
+                    this.width * 0.6, 
+                    this.height * 0.2, 
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Desenhar rastros de dash
+                for (let i = this.dashTrails.length - 1; i >= 0; i--) {
+                    this.dashTrails[i].draw();
+                    if (this.dashTrails[i].update()) {
+                        this.dashTrails.splice(i, 1);
+                    }
+                }
+                
+                // Pular o desenho do ninja principal se estiver invulnerável e piscando
+                if (this.invulnerable > 0 && Math.floor(gameTime * 15) % 2 === 0) {
+                    return;
+                }
+                
+                // Desenhar o ninja branco detalhado
+                this.drawNinja('white');
+                
+                // Se estiver em modo super dash, desenhar efeito de aura
+                if (this.superDashMode) {
+                    ctx.save();
+                    const gradient = ctx.createRadialGradient(
+                        this.x + this.width/2 - camera.x, 
+                        this.y + this.height/2 - camera.y, 
+                        2,
+                        this.x + this.width/2 - camera.x, 
+                        this.y + this.height/2 - camera.y, 
+                        20
+                    );
+                    
+                    const hue = (gameTime * 360) % 360;
+                    gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.7)`);
+                    gradient.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
+                    
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(
+                        this.x + this.width/2 - camera.x, 
+                        this.y + this.height/2 - camera.y, 
+                        16 + Math.sin(gameTime * 10) * 3, 
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            
+            drawNinja(color) {
+                const x = this.x - camera.x;
+                const y = this.y - camera.y;
+                const isAttacking = this.attackFrame > 0;
+                
+                // Animação de movimento para os braços e pernas
+                const walkFrame = Math.floor(this.animationFrame);
+                const legOffset = walkFrame % 2 === 0 ? 1 : -1;
+                const armOffset = walkFrame % 2 === 0 ? -1 : 1;
+                
+                // Escolher cor principal
+                ctx.fillStyle = color;
+                
+                // Corpo principal
+                ctx.fillRect(x + 6, y + 7, 4, 5); // torso
+                
+                // Pernas com animação
+                if (this.dashing) {
+                    // Pernas em posição de corrida durante dash
+                    ctx.fillRect(x + 5, y + 12, 2, 3 + legOffset); // perna esquerda
+                    ctx.fillRect(x + 9, y + 12, 2, 3 - legOffset); // perna direita
+                } else {
+                    // Pernas normais
+                    ctx.fillRect(x + 5, y + 12, 2, 4); // perna esquerda
+                    ctx.fillRect(x + 9, y + 12, 2, 4); // perna direita
+                }
+                
+                // Braços - posição depende da direção e da animação
+                if (Math.abs(this.facing.x) > Math.abs(this.facing.y)) {
+                    if (this.facing.x > 0) { // olhando direita
+                        if (isAttacking) {
+                            // Braço em posição de ataque
+                            ctx.fillRect(x + 10, y + 7, 5, 2); // braço direito extendido
+                            ctx.fillRect(x + 3, y + 7, 3, 2); // braço esquerdo
+                        } else {
+                            ctx.fillRect(x + 10, y + 7 + armOffset, 3, 2); // braço direito com offset
+                            ctx.fillRect(x + 3, y + 7 - armOffset, 3, 2); // braço esquerdo com offset oposto
+                        }
+                    } else { // olhando esquerda
+                        if (isAttacking) {
+                            // Braço em posição de ataque para a esquerda
+                            ctx.fillRect(x + 3, y + 7, 5, 2); // braço esquerdo extendido
+                            ctx.fillRect(x + 10, y + 7, 3, 2); // braço direito
+                        } else {
+                            ctx.fillRect(x + 3, y + 7 + armOffset, 3, 2); // braço esquerdo com offset
+                            ctx.fillRect(x + 10, y + 7 - armOffset, 3, 2); // braço direito com offset oposto
+                        }
+                    }
+                } else {
+                    if (this.facing.y > 0) { // olhando baixo
+                        if (isAttacking) {
+                            // Braços em posição de ataque para baixo
+                            ctx.fillRect(x + 4, y + 7, 2, 5); // braço esquerdo extendido
+                            ctx.fillRect(x + 10, y + 7, 2, 5); // braço direito extendido
+                        } else {
+                            ctx.fillRect(x + 4, y + 7, 2, 3 + armOffset); // braço esquerdo com offset
+                            ctx.fillRect(x + 10, y + 7, 2, 3 - armOffset); // braço direito com offset oposto
+                        }
+                    } else { // olhando cima
+                        if (isAttacking) {
+                            // Braços em posição de ataque para cima
+                            ctx.fillRect(x + 4, y + 2, 2, 5); // braço esquerdo extendido
+                            ctx.fillRect(x + 10, y + 2, 2, 5); // braço direito extendido
+                        } else {
+                            ctx.fillRect(x + 4, y + 5 - armOffset, 2, 3); // braço esquerdo com offset
+                            ctx.fillRect(x + 10, y + 5 + armOffset, 2, 3); // braço direito com offset oposto
+                        }
+                    }
+                }
+                
+                // Desenho da faixa na cintura
+                ctx.fillStyle = '#ff0000'; // Faixa vermelha para ninja branco
+                ctx.fillRect(x + 5, y + 11, 6, 1);
+                
+                // Cabeça
+                ctx.fillStyle = color;
+                ctx.fillRect(x + 5, y + 3, 6, 4); // cabeça principal
+                
+                // Máscara de ninja (parte que cobre a cabeça)
+                ctx.fillRect(x + 4, y + 2, 8, 2); // topo da máscara
+                ctx.fillRect(x + 4, y + 4, 1, 2); // lado esquerdo da máscara
+                ctx.fillRect(x + 11, y + 4, 1, 2); // lado direito da máscara
+                
+                // Detalhe da máscara
+                ctx.fillStyle = '#aaaaff'; // Detalhe azul claro na máscara
+                ctx.fillRect(x + 4, y + 3, 1, 1);
+                ctx.fillRect(x + 11, y + 3, 1, 1);
+                
+                // Olhos (parte visível da máscara)
+                ctx.fillStyle = 'black';
+                
+                // Posição dos olhos baseada na direção
+                if (this.facing.x > 0.5) { // Olhando para a direita
+                    ctx.fillRect(x + 8, y + 4, 2, 1);
+                } else if (this.facing.x < -0.5) { // Olhando para a esquerda
+                    ctx.fillRect(x + 6, y + 4, 2, 1);
+                } else if (this.facing.y > 0.5) { // Olhando para baixo
+                    ctx.fillRect(x + 6, y + 4, 1, 1);
+                    ctx.fillRect(x + 9, y + 4, 1, 1);
+                } else if (this.facing.y < -0.5) { // Olhando para cima
+                    ctx.fillRect(x + 6, y + 3, 1, 1);
+                    ctx.fillRect(x + 9, y + 3, 1, 1);
+                }
+                
+                // Se estiver em dash, desenha uma arma/katana
+                if (isAttacking) {
+                    ctx.fillStyle = '#aaaaaa'; // Cor da lâmina
+                    
+                    if (Math.abs(this.facing.x) > Math.abs(this.facing.y)) {
+                        if (this.facing.x > 0) { // direita
+                            ctx.fillRect(x + 13, y + 7, 6, 1); // lâmina horizontal
+                            ctx.fillRect(x + 13, y + 8, 3, 1); // ponta da lâmina
+                        } else { // esquerda
+                            ctx.fillRect(x - 3, y + 7, 6, 1); // lâmina horizontal
+                            ctx.fillRect(x, y + 8, 3, 1); // ponta da lâmina
+                        }
+                    } else {
+                        if (this.facing.y > 0) { // baixo
+                            ctx.fillRect(x + 7, y + 12, 1, 6); // lâmina vertical
+                            ctx.fillRect(x + 8, y + 15, 1, 3); // ponta da lâmina
+                        } else { // cima
+                            ctx.fillRect(x + 7, y - 3, 1, 6); // lâmina vertical
+                            ctx.fillRect(x + 8, y - 1, 1, 3); // ponta da lâmina
+                        }
+                    }
+                }
+                
+                // Efeito de brilho na arma durante o dash
+                if (this.dashing) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    
+                    if (Math.abs(this.facing.x) > Math.abs(this.facing.y)) {
+                        if (this.facing.x > 0) { // direita
+                            ctx.fillRect(x + 13, y + 6, 8, 3);
+                        } else { // esquerda
+                            ctx.fillRect(x - 5, y + 6, 8, 3);
+                        }
+                    } else {
+                        if (this.facing.y > 0) { // baixo
+                            ctx.fillRect(x + 6, y + 12, 3, 8);
+                        } else { // cima
+                            ctx.fillRect(x + 6, y - 5, 3, 8);
+                        }
+                    }
+                }
+            }
+            
+            update() {
+                this.animationFrame = (this.animationFrame + 0.15) % 4;
+                
+                // Atualizar contador de ataque
+                if (this.attackFrame > 0) {
+                    this.attackFrame--;
+                }
+                
+                if (this.dashing) {
+                    // Adicionar um novo rastro a cada 2 frames durante o dash
+                    if (this.dashFrame % 2 === 0) {
+                        // Cores diferentes para super dash
+                        let trailColor = 'rgba(255, 255, 255, 0.7)';
+                        if (this.superDashMode) {
+                            const hue = (gameTime * 360 + this.dashFrame * 20) % 360;
+                            trailColor = `hsla(${hue}, 100%, 70%, 0.7)`;
+                        }
+                        
+                        this.dashTrails.push(new DashTrail(
+                            this.x, 
+                            this.y, 
+                            this.width, 
+                            this.height, 
+                            this.dashDirectionX, 
+                            this.dashDirectionY, 
+                            trailColor
+                        ));
+                    }
+                    
+                    // Verifica se o destino foi atingido (para dash em distâncias menores)
+                    let reachedTarget = false;
+                    
+                    // Se for um dash curto com destino específico
+                    if (this.dashTargetX !== null && this.dashTargetY !== null) {
+                        const distToTarget = Math.sqrt(
+                            Math.pow(this.dashTargetX - this.x, 2) + 
+                            Math.pow(this.dashTargetY - this.y, 2)
+                        );
+                        
+                        if (distToTarget < this.dashSpeed) {
+                            // Chegou bem próximo do alvo, parar exatamente no destino
+                            this.x = this.dashTargetX;
+                            this.y = this.dashTargetY;
+                            reachedTarget = true;
+                        }
+                    }
+                    
+                    if (!reachedTarget) {
+                        // Lógica padrão do dash
+                        this.x += this.dashDirectionX * (this.superDashMode ? this.dashSpeed * 1.5 : this.dashSpeed);
+                        this.y += this.dashDirectionY * (this.superDashMode ? this.dashSpeed * 1.5 : this.dashSpeed);
+                    }
+                    
+                    // Verificar se está colidindo com flechas para cortá-las
+                    this.checkArrowCollisions();
+                    
+                    // Colisão com power-ups
+                    this.checkPowerUpCollisions();
+                    
+                    this.dashFrame++;
+                    if (this.dashFrame >= this.dashDuration || reachedTarget) {
+                        this.dashing = false;
+                        this.dashCooldown = this.dashMaxCooldown;
+                        this.attackFrame = 10; // Manter a posição de ataque por alguns frames
+                    }
+                    
+                    // Impede que o jogador saia da tela
+                    this.x = Math.max(30, Math.min(GAME_WIDTH - this.width - 30, this.x));
+                    this.y = Math.max(30, Math.min(GAME_HEIGHT - this.height - 30, this.y));
+                } else {
+                    // Reduzir cooldown do dash
+                    if (this.dashCooldown > 0) {
+                        this.dashCooldown--;
+                    }
+                }
+                
+                // Atualizar o modo super dash
+                if (this.superDashMode) {
+                    this.superDashTime--;
+                    if (this.superDashTime <= 0) {
+                        this.superDashMode = false;
+                    }
+                }
+                
+                // Limitar o número de rastros de dash para desempenho
+                if (this.dashTrails.length > 30) {
+                    this.dashTrails.shift();
+                }
+                
+                // Reduzir tempo de invulnerabilidade
+                if (this.invulnerable > 0) {
+                    this.invulnerable--;
+                }
+                
+                // Animação da sombra
+                this.shadowOffset = Math.sin(gameTime * 4) * 0.5;
+            }
+            
+            checkPowerUpCollisions() {
+                for (let i = powerUps.length - 1; i >= 0; i--) {
+                    if (this.isCollidingWith(powerUps[i])) {
+                        // Ativar o modo super dash
+                        this.superDashMode = true;
+                        this.superDashTime = 600; // 10 segundos (60fps * 10)
+                        this.dashCooldown = 0; // Reset do cooldown do dash
+                        
+                        // Efeito sonoro
+                        playPowerUpSound();
+                        
+                        // Efeito de câmera
+                        camera.targetZoom = 1.1;
+                        setTimeout(() => {
+                            camera.targetZoom = 1;
+                        }, 500);
+                        
+                        // Remover o power-up
+                        powerUps.splice(i, 1);
+                        
+                        // Adicionar score bônus
+                        score += 50;
+                    }
+                }
+            }
+            
+            checkArrowCollisions() {
+                for (let i = arrows.length - 1; i >= 0; i--) {
+                    if (this.isCollidingWith(arrows[i])) {
+                        // Em vez de tomar dano, corta a flecha
+                        arrows[i].cut();
+                        playSound('square', 880, 0.05, 0.1); // Som de flecha cortada
+                    }
+                }
+            }
+            
+            dash(targetX, targetY) {
+                if (!this.dashing && this.dashCooldown === 0) {
+                    // Calcular direção e distância do dash
+                    const dx = targetX - (this.x + this.width / 2);
+                    const dy = targetY - (this.y + this.height / 2);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Normalizar direção
+                    this.dashDirectionX = dx / distance;
+                    this.dashDirectionY = dy / distance;
+                    
+                    // Verificar se o alvo está dentro da distância máxima do dash
+                    if (distance <= this.dashMaxDistance) {
+                        // Ir para o local exato do clique
+                        this.dashTargetX = this.x + dx;
+                        this.dashTargetY = this.y + dy;
+                    } else {
+                        // Ir apenas até o limite do dash na direção clicada
+                        this.dashTargetX = this.x + this.dashDirectionX * this.dashMaxDistance;
+                        this.dashTargetY = this.y + this.dashDirectionY * this.dashMaxDistance;
+                    }
+                    
+                    // Atualizar a direção para a qual o jogador está olhando
+                    this.facing = { x: this.dashDirectionX, y: this.dashDirectionY };
+                    
+                    this.dashing = true;
+                    this.dashFrame = 0;
+                    this.invulnerable = 15; // Invulnerável durante o dash
+                    
+                    // Tocar som de dash
+                    playDashSound();
+                }
+            }
+            
+            takeDamage(amount) {
+                if (this.invulnerable <= 0) {
+                    this.health -= amount;
+                    this.invulnerable = 30; // Invulnerável por 30 frames após tomar dano
+                    
+                    // Tocar som de dano
+                    playHitSound();
+                    
+                    // Efeito de câmera
+                    camera.shake = 5;
+                    camera.shakeAmount = 3;
+                    
+                    if (this.health <= 0) {
+                        this.isAlive = false;
+                        playDeathSound();
+                    }
+                }
+            }
+        }
+        
+        class Enemy extends Sprite {
+            constructor(x, y, type) {
+                super(x, y, TILE_SIZE, TILE_SIZE, 'black');
+                this.type = type || 'melee'; // 'melee' ou 'archer'
+                this.speed = type === 'archer' ? 1 : 2;
+                this.attackCooldown = 0;
+                this.attackRange = type === 'archer' ? 200 : 20;
+                this.attackDamage = type === 'archer' ? 10 : 20;
+                this.health = type === 'archer' ? 50 : 80;
+                this.deathFrame = 0;
+                this.state = 'chase'; // 'chase', 'attack', 'dying'
+                this.directionX = 0;
+                this.directionY = 0;
+                this.animationFrame = 0;
+                this.deathAnimationComplete = false;
+                this.bloodCreated = false;
+                this.bloodParticles = [];
+                this.colorVariant = Math.floor(Math.random() * 3); // Variação de cor para os ninjas
+            }
+            
+            draw() {
+                this.animationFrame = (this.animationFrame + 0.1) % 4;
+                
+                // Desenhar partículas de sangue
+                for (let i = this.bloodParticles.length - 1; i >= 0; i--) {
+                    const particle = this.bloodParticles[i];
+                    
+                    ctx.fillStyle = `rgba(180, 0, 0, ${particle.alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(
+                        particle.x - camera.x, 
+                        particle.y - camera.y, 
+                        particle.size, 
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    // Atualizar partícula
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vy += 0.1; // Gravidade
+                    particle.alpha -= 0.01;
+                    particle.life--;
+                    
+                    if (particle.life <= 0 || particle.alpha <= 0) {
+                        this.bloodParticles.splice(i, 1);
+                    }
+                }
+                
+                // Desenhar sombra
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(
+                    this.x + this.width/2 - camera.x, 
+                    this.y + this.height - 2 - camera.y, 
+                    this.width * 0.6, 
+                    this.height * 0.2, 
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                if (this.state === 'dying') {
+                    if (!this.deathAnimationComplete) {
+                        // Animação de morte
+                        const deathProgress = this.deathFrame / 30;
+                        
+                        // Ninja caindo no chão
+                        const fallOffset = deathProgress * 3;
+                        
+                        // Desenhar ninja preto morrendo
+                        if (deathProgress < 0.5) {
+                            // Primeira metade: ninja caindo
+                            ctx.save();
+                            ctx.translate(this.x + this.width/2 - camera.x, this.y + this.height/2 - camera.y);
+                            ctx.rotate(deathProgress * Math.PI / 2); // Rotação até 90 graus
+                            ctx.translate(-(this.x + this.width/2 - camera.x), -(this.y + this.height/2 - camera.y));
+                            
+                            this.drawNinjaBody(this.x - camera.x, this.y + fallOffset - camera.y);
+                            
+                            ctx.restore();
+                        } else {
+                            // Segunda metade: ninja no chão
+                            this.drawDeadNinja(this.x - camera.x, this.y - camera.y);
+                        }
+                    } else {
+                        // Após a animação completa, desenha o corpo morto
+                        this.drawDeadNinja(this.x - camera.x, this.y - camera.y);
+                    }
+                    return;
+                }
+                
+                // Desenhar ninja inimigo normal
+                this.drawNinjaBody(this.x - camera.x, this.y - camera.y);
+                
+                // Animação de ataque
+                if (this.state === 'attack') {
+                    ctx.fillStyle = this.type === 'archer' ? 'brown' : 'gray';
+                    
+                    if (this.type === 'archer') {
+                        // Arqueiro preparando arco e flecha
+                        const bowSize = 6;
+                        if (Math.abs(this.directionX) > Math.abs(this.directionY)) {
+                            if (this.directionX > 0) { // Direita
+                                ctx.fillRect(this.x + 14 - camera.x, this.y + 6 - camera.y, 1, bowSize);
+                                // Corda do arco
+                                ctx.strokeStyle = 'white';
+                                ctx.beginPath();
+                                ctx.moveTo(this.x + 14 - camera.x, this.y + 6 - camera.y);
+                                ctx.lineTo(this.x + 12 - camera.x, this.y + 8 - camera.y);
+                                ctx.lineTo(this.x + 14 - camera.x, this.y + 6 + bowSize - camera.y);
+                                ctx.stroke();
+                            } else { // Esquerda
+                                ctx.fillRect(this.x + 1 - camera.x, this.y + 6 - camera.y, 1, bowSize);
+                                // Corda do arco
+                                ctx.strokeStyle = 'white';
+                                ctx.beginPath();
+                                ctx.moveTo(this.x + 1 - camera.x, this.y + 6 - camera.y);
+                                ctx.lineTo(this.x + 3 - camera.x, this.y + 8 - camera.y);
+                                ctx.lineTo(this.x + 1 - camera.x, this.y + 6 + bowSize - camera.y);
+                                ctx.stroke();
+                            }
+                        } else {
+                            if (this.directionY > 0) { // Baixo
+                                ctx.fillRect(this.x + 6 - camera.x, this.y + 14 - camera.y, bowSize, 1);
+                                // Corda do arco
+                                ctx.strokeStyle = 'white';
+                                ctx.beginPath();
+                                ctx.moveTo(this.x + 6 - camera.x, this.y + 14 - camera.y);
+                                ctx.lineTo(this.x + 8 - camera.x, this.y + 12 - camera.y);
+                                ctx.lineTo(this.x + 6 + bowSize - camera.x, this.y + 14 - camera.y);
+                                ctx.stroke();
+                            } else { // Cima
+                                ctx.fillRect(this.x + 6 - camera.x, this.y + 1 - camera.y, bowSize, 1);
+                                // Corda do arco
+                                ctx.strokeStyle = 'white';
+                                ctx.beginPath();
+                                ctx.moveTo(this.x + 6 - camera.x, this.y + 1 - camera.y);
+                                ctx.lineTo(this.x + 8 - camera.x, this.y + 3 - camera.y);
+                                ctx.lineTo(this.x + 6 + bowSize - camera.x, this.y + 1 - camera.y);
+                                ctx.stroke();
+                            }
+                        }
+                    } else {
+                        // Ninja melee mostra uma lâmina no ataque
+                        const attackFrame = Math.floor(this.animationFrame * 2) % 2;
+                        if (Math.abs(this.directionX) > Math.abs(this.directionY)) {
+                            if (this.directionX > 0) { // Direita
+                                ctx.fillRect(this.x + 13 - camera.x, this.y + 7 - camera.y, 5, 1);
+                                ctx.fillRect(this.x + 13 + attackFrame - camera.x, this.y + 6 - camera.y, 2, 3);
+                            } else { // Esquerda
+                                ctx.fillRect(this.x - 2 - camera.x, this.y + 7 - camera.y, 5, 1);
+                                ctx.fillRect(this.x + 1 - attackFrame - camera.x, this.y + 6 - camera.y, 2, 3);
+                            }
+                        } else {
+                            if (this.directionY > 0) { // Baixo
+                                ctx.fillRect(this.x + 7 - camera.x, this.y + 13 - camera.y, 1, 5);
+                                ctx.fillRect(this.x + 6 - camera.x, this.y + 13 + attackFrame - camera.y, 3, 2);
+                            } else { // Cima
+                                ctx.fillRect(this.x + 7 - camera.x, this.y - 2 - camera.y, 1, 5);
+                                ctx.fillRect(this.x + 6 - camera.x, this.y + 1 - attackFrame - camera.y, 3, 2);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            getNinjaColor() {
+                // Variar ligeiramente a cor dos ninjas inimigos
+                switch(this.colorVariant) {
+                    case 0: return 'black'; // Ninja padrão preto
+                    case 1: return '#301934'; // Roxo muito escuro
+                    case 2: return '#1A0000'; // Vermelho muito escuro
+                    default: return 'black';
+                }
+            }
+            
+            drawNinjaBody(x, y) {
+                const color = this.getNinjaColor();
+                ctx.fillStyle = color;
+                
+                // Animação de movimento para os braços e pernas
+                const walkFrame = Math.floor(this.animationFrame);
+                const legOffset = walkFrame % 2 === 0 ? 1 : -1;
+                const armOffset = walkFrame % 2 === 0 ? -1 : 1;
+                
+                // Corpo principal
+                ctx.fillRect(x + 6, y + 7, 4, 5); // torso
+                
+                // Pernas com animação
+                if (this.state === 'chase') {
+                    ctx.fillRect(x + 5, y + 12, 2, 3 + legOffset); // perna esquerda
+                    ctx.fillRect(x + 9, y + 12, 2, 3 - legOffset); // perna direita
+                } else {
+                    ctx.fillRect(x + 5, y + 12, 2, 4); // perna esquerda estática
+                    ctx.fillRect(x + 9, y + 12, 2, 4); // perna direita estática
+                }
+                
+                // Braços - posição depende da direção e da animação
+                if (Math.abs(this.directionX) > Math.abs(this.directionY)) {
+                    if (this.directionX > 0) { // olhando direita
+                        ctx.fillRect(x + 10, y + 7 + armOffset, 3, 2); // braço direito com offset
+                        ctx.fillRect(x + 3, y + 7 - armOffset, 3, 2); // braço esquerdo com offset oposto
+                    } else { // olhando esquerda
+                        ctx.fillRect(x + 3, y + 7 + armOffset, 3, 2); // braço esquerdo com offset
+                        ctx.fillRect(x + 10, y + 7 - armOffset, 3, 2); // braço direito com offset oposto
+                    }
+                } else {
+                    if (this.directionY > 0) { // olhando baixo
+                        ctx.fillRect(x + 4, y + 7, 2, 3 + armOffset); // braço esquerdo com offset
+                        ctx.fillRect(x + 10, y + 7, 2, 3 - armOffset); // braço direito com offset oposto
+                    } else { // olhando cima
+                        ctx.fillRect(x + 4, y + 5 - armOffset, 2, 3); // braço esquerdo com offset
+                        ctx.fillRect(x + 10, y + 5 + armOffset, 2, 3); // braço direito com offset oposto
+                    }
+                }
+                
+                // Desenho da faixa na cintura (variação de cor)
+                switch(this.colorVariant) {
+                    case 0: ctx.fillStyle = '#660000'; break; // Vermelho escuro
+                    case 1: ctx.fillStyle = '#003366'; break; // Azul escuro
+                    case 2: ctx.fillStyle = '#006600'; break; // Verde escuro
+                }
+                ctx.fillRect(x + 5, y + 11, 6, 1);
+                
+                // Cabeça
+                ctx.fillStyle = color;
+                ctx.fillRect(x + 5, y + 3, 6, 4); // cabeça principal
+                
+                // Máscara de ninja (parte que cobre a cabeça)
+                ctx.fillRect(x + 4, y + 2, 8, 2); // topo da máscara
+                ctx.fillRect(x + 4, y + 4, 1, 2); // lado esquerdo da máscara
+                ctx.fillRect(x + 11, y + 4, 1, 2); // lado direito da máscara
+                
+                // Detalhe da máscara (variação de cor)
+                switch(this.colorVariant) {
+                    case 0: ctx.fillStyle = '#aa0000'; break; // Vermelho
+                    case 1: ctx.fillStyle = '#0000aa'; break; // Azul
+                    case 2: ctx.fillStyle = '#00aa00'; break; // Verde
+                }
+                ctx.fillRect(x + 4, y + 3, 1, 1);
+                ctx.fillRect(x + 11, y + 3, 1, 1);
+                
+                // Olhos (parte visível da máscara)
+                ctx.fillStyle = 'red';
+                
+                // Posição dos olhos baseada na direção
+                if (this.directionX > 0.5) { // Olhando para a direita
+                    ctx.fillRect(x + 8, y + 4, 2, 1);
+                } else if (this.directionX < -0.5) { // Olhando para a esquerda
+                    ctx.fillRect(x + 6, y + 4, 2, 1);
+                } else if (this.directionY > 0.5) { // Olhando para baixo
+                    ctx.fillRect(x + 6, y + 4, 1, 1);
+                    ctx.fillRect(x + 9, y + 4, 1, 1);
+                } else if (this.directionY < -0.5) { // Olhando para cima
+                    ctx.fillRect(x + 6, y + 3, 1, 1);
+                    ctx.fillRect(x + 9, y + 3, 1, 1);
+                }
+                
+                // Detalhes específicos para cada tipo de ninja
+                if (this.type === 'archer') {
+                    // Arco para o arqueiro
+                    ctx.fillStyle = 'brown';
+                    
+                    // Desenhar o arco baseado na direção
+                    if (Math.abs(this.directionX) > Math.abs(this.directionY)) {
+                        if (this.directionX > 0) { // Direita
+                            ctx.fillRect(x + 13, y + 6, 1, 4);
+                        } else { // Esquerda
+                            ctx.fillRect(x + 2, y + 6, 1, 4);
+                        }
+                    } else {
+                        if (this.directionY > 0) { // Baixo
+                            ctx.fillRect(x + 6, y + 13, 4, 1);
+                        } else { // Cima
+                            ctx.fillRect(x + 6, y + 2, 4, 1);
+                        }
+                    }
+                    
+                    // Aljava de flechas nas costas
+                    ctx.fillStyle = 'saddlebrown';
+                    ctx.fillRect(x + 5, y + 8, 2, 3);
+                    
+                    // Pontas das flechas
+                    ctx.fillStyle = 'gray';
+                    ctx.fillRect(x + 5, y + 7, 2, 1);
+                }
+            }
+            
+            drawDeadNinja(x, y) {
+                const color = this.getNinjaColor();
+                ctx.fillStyle = color;
+                
+                // Ninja caído de lado
+                ctx.fillRect(x + 3, y + 12, 10, 3); // corpo deitado
+                ctx.fillRect(x + 10, y + 9, 5, 3); // cabeça
+                
+                // Membros espalhados
+                ctx.fillRect(x + 2, y + 11, 3, 2); // braço esticado
+                ctx.fillRect(x + 5, y + 15, 3, 1); // perna
+                ctx.fillRect(x + 9, y + 15, 3, 1); // outra perna
+                
+                // Faixa caída
+                switch(this.colorVariant) {
+                    case 0: ctx.fillStyle = '#660000'; break; // Vermelho escuro
+                    case 1: ctx.fillStyle = '#003366'; break; // Azul escuro
+                    case 2: ctx.fillStyle = '#006600'; break; // Verde escuro
+                }
+                ctx.fillRect(x + 7, y + 14, 4, 1);
+                
+                // Olhos fechados (x)
+                ctx.fillStyle = 'darkred';
+                ctx.fillRect(x + 11, y + 10, 1, 1);
+                ctx.fillRect(x + 13, y + 10, 1, 1);
+                
+                // Se for arqueiro, mostrar arco quebrado
+                if (this.type === 'archer') {
+                    ctx.fillStyle = 'brown';
+                    ctx.fillRect(x + 7, y + 13, 4, 1); // arco quebrado
+                    ctx.fillRect(x + 3, y + 14, 2, 1); // pedaço do arco
+                    
+                    // Aljava caída
+                    ctx.fillStyle = 'saddlebrown';
+                    ctx.fillRect(x + 8, y + 11, 2, 2);
+                }
+            }
+            
+            update() {
+                if (!this.isAlive) {
+                    if (this.state !== 'dying') {
+                        this.state = 'dying';
+                        this.deathFrame = 0;
+                        
+                        // Tocar som de morte
+                        playDeathSound();
+                        
+                        // Criar partículas de sangue (apenas uma vez)
+                        if (!this.bloodCreated) {
+                            this.createBloodEffect();
+                            this.bloodCreated = true;
+                        }
+                    }
+                    
+                    // Criar mancha de sangue no local da morte (apenas uma vez)
+                    if (!this.bloodCreated) {
+                        createBloodSplat(this.x, this.y);
+                        this.bloodCreated = true;
+                    }
+                    
+                    this.deathFrame++;
+                    if (this.deathFrame >= 30) {
+                        this.deathAnimationComplete = true;
+                        
+                        // Adicionar este inimigo à lista de corpos mortos
+                        deadBodies.push({
+                            x: this.x,
+                            y: this.y,
+                            type: this.type,
+                            direction: { x: this.directionX, y: this.directionY },
+                            colorVariant: this.colorVariant
+                        });
+                        
+                        return true; // Sinalizar para remover este inimigo da lista de inimigos ativos
+                    }
+                    return false;
+                }
+                
+                // Calcular distância até o jogador
+                const dx = player.x - this.x;
+                const dy = player.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Normalizar direção
+                this.directionX = dx / distance;
+                this.directionY = dy / distance;
+                
+                // Definir estado baseado na distância
+                if (distance <= this.attackRange) {
+                    this.state = 'attack';
+                } else {
+                    this.state = 'chase';
+                }
+                
+                if (this.state === 'chase') {
+                    // Mover em direção ao jogador
+                    this.x += this.directionX * this.speed;
+                    this.y += this.directionY * this.speed;
+                    
+                    // Verificar colisão com outros inimigos para evitar sobreposição
+                    for (const other of enemies) {
+                        if (other !== this && this.isCollidingWith(other)) {
+                            // Aplicar pequeno impulso para evitar sobreposição
+                            const pushDx = this.x - other.x;
+                            const pushDy = this.y - other.y;
+                            const pushDist = Math.sqrt(pushDx * pushDx + pushDy * pushDy);
+                            
+                            if (pushDist > 0) {
+                                this.x += pushDx / pushDist * 0.5;
+                                this.y += pushDy / pushDist * 0.5;
+                            }
+                        }
+                    }
+                    
+                    // Impedir que saiam do dojo
+                    this.x = Math.max(30, Math.min(GAME_WIDTH - this.width - 30, this.x));
+                    this.y = Math.max(30, Math.min(GAME_HEIGHT - this.height - 30, this.y));
+                } else if (this.state === 'attack') {
+                    // Atacar o jogador
+                    if (this.attackCooldown <= 0) {
+                        if (this.type === 'archer') {
+                            // Atirar flecha
+                            createArrow(this.x + this.width/2, this.y + this.height/2, this.directionX, this.directionY, this.attackDamage);
+                            this.attackCooldown = 60; // 1 segundo com 60 FPS
+                            playArrowSound();
+                        } else if (distance <= this.width) {
+                            // Atacar corpo a corpo apenas se estiver próximo o suficiente
+                            player.takeDamage(this.attackDamage);
+                            this.attackCooldown = 30; // 0.5 segundo com 60 FPS
+                            playSwordSound();
+                        }
+                    }
+                }
+                
+                // Reduzir cooldown do ataque
+                if (this.attackCooldown > 0) {
+                    this.attackCooldown--;
+                }
+                
+                // Verificar se colidiu com o jogador durante um dash
+                if (player.dashing && this.isCollidingWith(player)) {
+                    this.takeDamage(100); // Matar com um dash
+                    score += this.type === 'archer' ? 20 : 10;
+                    
+                    // Som de corte e morte
+                    playSwordSound();
+                }
+                
+                return false; // Não remover este inimigo
+            }
+            
+            createBloodEffect() {
+                // Criar partículas de sangue
+                for (let i = 0; i < 15; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 3;
+                    
+                    this.bloodParticles.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height/2,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 1, // Adicionar um pouco de salto
+                        size: 1 + Math.random() * 2,
+                        alpha: 0.8 + Math.random() * 0.2,
+                        life: 20 + Math.random() * 30
+                    });
+                }
+            }
+            
+            takeDamage(amount) {
+                this.health -= amount;
+                
+                // Criar algumas partículas de sangue mesmo quando não morrer
+                if (this.health > 0) {
+                    for (let i = 0; i < 5; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = 1 + Math.random() * 2;
+                        
+                        this.bloodParticles.push({
+                            x: this.x + this.width/2,
+                            y: this.y + this.height/2,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            size: 1 + Math.random(),
+                            alpha: 0.7 + Math.random() * 0.3,
+                            life: 10 + Math.random() * 10
+                        });
+                    }
+                }
+                
+                if (this.health <= 0) {
+                    this.isAlive = false;
+                }
+            }
+        }
+        
+        class Arrow {
+            constructor(x, y, dirX, dirY, damage) {
+                this.x = x;
+                this.y = y;
+                this.dirX = dirX;
+                this.dirY = dirY;
+                this.speed = 5;
+                this.width = 8;
+                this.height = 8;
+                this.damage = damage;
+                this.active = true;
+                this.isCut = false;
+                this.cutFrame = 0;
+            }
+            
+            draw() {
+                if (this.isCut) {
+                    // Desenhar flecha cortada (em duas partes)
+                    this.drawCutArrow();
+                    return;
+                }
+                
+                // Desenhar uma flecha mais detalhada
+                const angle = Math.atan2(this.dirY, this.dirX);
+                
+                ctx.save();
+                ctx.translate(this.x - camera.x, this.y - camera.y);
+                ctx.rotate(angle);
+                
+                // Corpo da flecha
+                ctx.fillStyle = 'brown';
+                ctx.fillRect(0, -1, 8, 2);
+                
+                // Pena da flecha
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(-2, -2);
+                ctx.lineTo(-5, -3);
+                ctx.lineTo(-3, 0);
+                ctx.lineTo(-5, 3);
+                ctx.lineTo(-2, 2);
+                ctx.fill();
+                
+                // Ponta da flecha
+                ctx.fillStyle = 'gray';
+                ctx.beginPath();
+                ctx.moveTo(8, 0);
+                ctx.lineTo(5, -2);
+                ctx.lineTo(5, 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            drawCutArrow() {
+                const angle = Math.atan2(this.dirY, this.dirX);
+                const cutDistance = this.cutFrame * 0.5;
+                
+                // Primeira metade da flecha
+                ctx.save();
+                ctx.translate(this.x - this.dirX * cutDistance - camera.x, this.y - this.dirY * cutDistance - camera.y);
+                ctx.rotate(angle);
+                
+                ctx.fillStyle = 'brown';
+                ctx.fillRect(-5, -1, 5, 2);
+                
+                // Pena
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(-5, -2);
+                ctx.lineTo(-8, -3);
+                ctx.lineTo(-6, 0);
+                ctx.lineTo(-8, 3);
+                ctx.lineTo(-5, 2);
+                ctx.fill();
+                
+                ctx.restore();
+                
+                // Segunda metade da flecha
+                ctx.save();
+                ctx.translate(this.x + this.dirX * cutDistance - camera.x, this.y + this.dirY * cutDistance - camera.y);
+                ctx.rotate(angle);
+                
+                ctx.fillStyle = 'brown';
+                ctx.fillRect(0, -1, 5, 2);
+                
+                // Ponta
+                ctx.fillStyle = 'gray';
+                ctx.beginPath();
+                ctx.moveTo(5, 0);
+                ctx.lineTo(3, -2);
+                ctx.lineTo(3, 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            update() {
+                if (this.isCut) {
+                    // Animação de flecha cortada
+                    this.cutFrame++;
+                    if (this.cutFrame > 20) {
+                        return true; // Remover a flecha
+                    }
+                    return false;
+                }
+                
+                // Mover a flecha
+                this.x += this.dirX * this.speed;
+                this.y += this.dirY * this.speed;
+                
+                // Verificar se saiu da tela
+                if (this.x < 0 || this.x > GAME_WIDTH || this.y < 0 || this.y > GAME_HEIGHT) {
+                    this.active = false;
+                    return true; // Remover esta flecha
+                }
+                
+                // Verificar colisão com o jogador
+                if (this.isCollidingWith(player) && !player.dashing && player.invulnerable <= 0) {
+                    player.takeDamage(this.damage);
+                    this.active = false;
+                    return true; // Remover esta flecha
+                }
+                
+                return false;
+            }
+            
+            cut() {
+                this.isCut = true;
+                this.cutFrame = 0;
+            }
+            
+            isCollidingWith(other) {
+                const hitboxSize = 4; // Hitbox menor para a flecha
+                
+                return (
+                    this.x - hitboxSize < other.x + other.width &&
+                    this.x + hitboxSize > other.x &&
+                    this.y - hitboxSize < other.y + other.height &&
+                    this.y + hitboxSize > other.y
+                );
+            }
+        }
+        
+        class PowerUp {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 16;
+                this.height = 16;
+                this.pulseTime = 0;
+                this.active = true;
+            }
+            
+            draw() {
+                this.pulseTime += 0.05;
+                const pulse = Math.sin(this.pulseTime) * 0.2 + 1;
+                
+                // Desenhar círculo de energia
+                ctx.save();
+                const hue = (gameTime * 100) % 360;
+                const gradient = ctx.createRadialGradient(
+                    this.x + this.width/2 - camera.x, 
+                    this.y + this.height/2 - camera.y, 
+                    2,
+                    this.x + this.width/2 - camera.x, 
+                    this.y + this.height/2 - camera.y, 
+                    this.width * pulse
+                );
+                
+                gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.8)`);
+                gradient.addColorStop(0.5, `hsla(${hue + 40}, 100%, 60%, 0.5)`);
+                gradient.addColorStop(1, `hsla(${hue + 80}, 100%, 50%, 0)`);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(
+                    this.x + this.width/2 - camera.x, 
+                    this.y + this.height/2 - camera.y, 
+                    this.width/2 * pulse, 
+                    0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Desenhar símbolo dentro
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(this.x + 4 - camera.x, this.y + 8 - camera.y);
+                ctx.lineTo(this.x + 12 - camera.x, this.y + 8 - camera.y);
+                ctx.lineTo(this.x + 8 - camera.x, this.y + 4 - camera.y);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x + 4 - camera.x, this.y + 8 - camera.y);
+                ctx.lineTo(this.x + 12 - camera.x, this.y + 8 - camera.y);
+                ctx.lineTo(this.x + 8 - camera.x, this.y + 12 - camera.y);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            update() {
+                // Verificar colisão com o jogador
+                return false;
+            }
+        }
+        
+        class Spectator {
+            constructor(x, y, side) {
+                this.x = x;
+                this.y = y;
+                this.side = side; // 'left', 'right', 'top', 'bottom'
+                this.animationFrame = Math.random() * 4;
+                this.animationSpeed = 0.05 + Math.random() * 0.05;
+                this.excited = false;
+                this.excitedTime = 0;
+                this.color = Math.floor(Math.random() * 5); // Variação de cor
+            }
+            
+            draw() {
+                this.animationFrame += this.animationSpeed;
+                if (this.animationFrame > 4) this.animationFrame = 0;
+                
+                const x = this.x - camera.x;
+                const y = this.y - camera.y;
+                
+                // Desenhar sombra
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.ellipse(x + 8, y + 14, 6, 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Determinar a cor do espectador
+                let color;
+                switch(this.color) {
+                    case 0: color = '#5D4037'; break; // Marrom
+                    case 1: color = '#455A64'; break; // Azul acinzentado
+                    case 2: color = '#37474F'; break; // Cinza escuro
+                    case 3: color = '#3E2723'; break; // Marrom escuro
+                    case 4: color = '#4E342E'; break; // Marrom médio
+                    default: color = '#5D4037';
+                }
+                
+                // Corpo sentado
+                ctx.fillStyle = color;
+                ctx.fillRect(x + 5, y + 8, 6, 6); // torso
+                
+                // Pernas cruzadas
+                ctx.fillRect(x + 4, y + 13, 8, 2); // pernas
+                
+                // Braços - animados se estiver excitado
+                if (this.excited) {
+                    const armFrame = Math.floor(this.animationFrame);
+                    
+                    if (armFrame % 2 === 0) {
+                        ctx.fillRect(x + 3, y + 8, 2, 4); // braço esquerdo para cima
+                        ctx.fillRect(x + 11, y + 8, 2, 4); // braço direito para cima
+                    } else {
+                        ctx.fillRect(x + 3, y + 6, 2, 6); // braço esquerdo mais para cima
+                        ctx.fillRect(x + 11, y + 6, 2, 6); // braço direito mais para cima
+                    }
+                } else {
+                    // Braços relaxados
+                    ctx.fillRect(x + 3, y + 9, 2, 3); // braço esquerdo
+                    ctx.fillRect(x + 11, y + 9, 2, 3); // braço direito
+                }
+                
+                // Cabeça
+                ctx.fillRect(x + 5, y + 4, 6, 4); // cabeça principal
+                
+                // Detalhes na roupa
+                const detailColor = this.excited ? '#FFFFFF' : '#DDDDDD';
+                ctx.fillStyle = detailColor;
+                ctx.fillRect(x + 6, y + 10, 4, 1); // cinto ou detalhe na roupa
+                
+                // Rosto - olhando na direção do jogador
+                const playerDirX = player.x - this.x;
+                const playerDirY = player.y - this.y;
+                
+                // Olhos
+                ctx.fillStyle = 'black';
+                
+                // Ajustar posição dos olhos com base na direção
+                let eyeX = x + 6;
+                if (playerDirX > 0) eyeX += 1;
+                if (playerDirX < 0) eyeX -= 1;
+                
+                let eyeY = y + 5;
+                if (playerDirY > 0) eyeY += 1;
+                if (playerDirY < 0) eyeY -= 1;
+                
+                ctx.fillRect(eyeX, eyeY, 1, 1); // olho esquerdo
+                ctx.fillRect(eyeX + 3, eyeY, 1, 1); // olho direito
+                
+                // Boca - reagindo à ação
+                if (this.excited) {
+                    ctx.fillRect(x + 6, y + 7, 4, 1); // boca aberta (surpreso)
+                } else {
+                    ctx.fillRect(x + 7, y + 7, 2, 1); // boca fechada
+                }
+            }
+            
+            update() {
+                // Diminuir a excitação com o tempo
+                if (this.excited) {
+                    this.excitedTime--;
+                    if (this.excitedTime <= 0) {
+                        this.excited = false;
+                    }
+                }
+                
+                // Reagir às mortes próximas
+                for (const enemy of enemies) {
+                    if (!enemy.isAlive && enemy.state === 'dying' && enemy.deathFrame === 0) {
+                        const dx = enemy.x - this.x;
+                        const dy = enemy.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 150) {
+                            this.excited = true;
+                            this.excitedTime = 60; // Excitado por 1 segundo
+                            this.animationSpeed = 0.2; // Animação mais rápida quando excitado
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Arrays para armazenar objetos do jogo
+        let arrows = [];
+        
+        // Funções auxiliares
+        function createEnemy(type) {
+            // Escolher uma borda aleatória para o spawn
+            const edge = Math.floor(Math.random() * 4);
+            let x, y;
+            
+            switch (edge) {
+                case 0: // Topo
+                    x = Math.random() * (GAME_WIDTH - 100) + 50;
+                    y = 30;
+                    break;
+                case 1: // Direita
+                    x = GAME_WIDTH - 30;
+                    y = Math.random() * (GAME_HEIGHT - 100) + 50;
+                    break;
+                case 2: // Baixo
+                    x = Math.random() * (GAME_WIDTH - 100) + 50;
+                    y = GAME_HEIGHT - 30;
+                    break;
+                case 3: // Esquerda
+                    x = 30;
+                    y = Math.random() * (GAME_HEIGHT - 100) + 50;
+                    break;
+            }
+            
+            // Criar inimigo do tipo especificado
+            const enemyType = type || (Math.random() < 0.7 ? 'melee' : 'archer');
+            enemies.push(new Enemy(x, y, enemyType));
+        }
+        
+        function createPowerUp() {
+            // Criar power-up em uma posição aleatória dentro do tatame
+            const tatameMargin = 120;
+            const x = tatameMargin + Math.random() * (GAME_WIDTH - tatameMargin * 2);
+            const y = tatameMargin + Math.random() * (GAME_HEIGHT - tatameMargin * 2);
+            
+            powerUps.push(new PowerUp(x, y));
+        }
+        
+        function createArrow(x, y, dirX, dirY, damage) {
+            arrows.push(new Arrow(x, y, dirX, dirY, damage));
+        }
+        
+        function createBloodSplat(x, y) {
+            // Criar uma mancha de sangue permanente no local especificado
+            bloodSplats.push({
+                x: x + (Math.random() * 8 - 4),
+                y: y + (Math.random() * 8 - 4),
+                size: 12 + Math.random() * 8,
+                drops: []
+            });
+            
+            // Gerar gotas de sangue para esta mancha
+            const numDrops = 5 + Math.floor(Math.random() * 5);
+            for (let i = 0; i < numDrops; i++) {
+                bloodSplats[bloodSplats.length - 1].drops.push({
+                    x: Math.random() * 12 - 6,
+                    y: Math.random() * 12 - 6,
+                    size: 2 + Math.random() * 3
+                });
+            }
+        }
+        
+        function createSpectators() {
+            // Criar espectadores ao redor do tatame
+            const tatameMargin = 100;
+            const tatameX = tatameMargin;
+            const tatameY = tatameMargin;
+            const tatameWidth = GAME_WIDTH - (tatameMargin * 2);
+            const tatameHeight = GAME_HEIGHT - (tatameMargin * 2);
+            
+            // Espectadores no lado esquerdo
+            for (let y = tatameY + 30; y < tatameY + tatameHeight - 30; y += 25) {
+                spectators.push(new Spectator(tatameX - 20, y, 'left'));
+            }
+            
+            // Espectadores no lado direito
+            for (let y = tatameY + 30; y < tatameY + tatameHeight - 30; y += 25) {
+                spectators.push(new Spectator(tatameX + tatameWidth + 5, y, 'right'));
+            }
+            
+            // Espectadores no topo
+            for (let x = tatameX + 30; x < tatameX + tatameWidth - 30; x += 25) {
+                spectators.push(new Spectator(x, tatameY - 20, 'top'));
+            }
+            
+            // Espectadores na base
+            for (let x = tatameX + 30; x < tatameX + tatameWidth - 30; x += 25) {
+                spectators.push(new Spectator(x, tatameY + tatameHeight + 5, 'bottom'));
+            }
+        }
+        
+        function drawBloodSplat(blood) {
+            ctx.fillStyle = 'rgba(180, 0, 0, 0.8)';
+            
+            // Desenhar gotas de sangue permanentes
+            for (const drop of blood.drops) {
+                ctx.beginPath();
+                ctx.arc(blood.x + drop.x - camera.x, blood.y + drop.y - camera.y, drop.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function drawDeadBody(body) {
+            let color;
+            switch(body.colorVariant) {
+                case 0: color = 'black'; break;
+                case 1: color = '#301934'; break;
+                case 2: color = '#1A0000'; break;
+                default: color = 'black';
+            }
+            
+            ctx.fillStyle = color;
+            const x = body.x - camera.x;
+            const y = body.y - camera.y;
+            
+            // Ninja caído de lado
+            ctx.fillRect(x + 3, y + 12, 10, 3); // corpo deitado
+            ctx.fillRect(x + 10, y + 9, 5, 3); // cabeça
+            
+            // Membros espalhados
+            ctx.fillRect(x + 2, y + 11, 3, 2); // braço esticado
+            ctx.fillRect(x + 5, y + 15, 3, 1); // perna
+            ctx.fillRect(x + 9, y + 15, 3, 1); // outra perna
+            
+            // Faixa caída
+            switch(body.colorVariant) {
+                case 0: ctx.fillStyle = '#660000'; break; // Vermelho escuro
+                case 1: ctx.fillStyle = '#003366'; break; // Azul escuro
+                case 2: ctx.fillStyle = '#006600'; break; // Verde escuro
+                default: ctx.fillStyle = '#660000';
+            }
+            ctx.fillRect(x + 7, y + 14, 4, 1);
+            
+            // Olhos fechados (x)
+            ctx.fillStyle = 'darkred';
+            ctx.fillRect(x + 11, y + 10, 1, 1);
+            ctx.fillRect(x + 13, y + 10, 1, 1);
+            
+            // Se for arqueiro, mostrar arco quebrado
+            if (body.type === 'archer') {
+                ctx.fillStyle = 'brown';
+                ctx.fillRect(x + 7, y + 13, 4, 1); // arco quebrado
+                ctx.fillRect(x + 3, y + 14, 2, 1); // pedaço do arco
+                
+                // Aljava caída
+                ctx.fillStyle = 'saddlebrown';
+                ctx.fillRect(x + 8, y + 11, 2, 2);
+            }
+        }
+        
+        function drawBackground() {
+            // Redesenhar o dojo com tatame no centro e piso de madeira ao redor
+            
+            // Piso de madeira para todo o dojo
+            ctx.fillStyle = '#8B4513'; // Marrom escuro
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Desenhar linhas de madeira
+            ctx.fillStyle = '#A0522D'; // Marrom um pouco mais claro
+            for (let x = 0; x < GAME_WIDTH; x += 40) {
+                for (let y = 0; y < GAME_HEIGHT; y += 15) {
+                    ctx.fillRect(x - camera.x % 40, y - camera.y % 15, 40, 1);
+                }
+            }
+            
+            // Desenhar detalhes nas tábuas do piso
+            ctx.fillStyle = '#8B4513';
+            for (let x = 10; x < GAME_WIDTH; x += 40) {
+                for (let y = 5; y < GAME_HEIGHT; y += 15) {
+                    ctx.fillRect(x - camera.x % 40, y - camera.y % 15, 4, 4);
+                }
+            }
+            
+            // Tatame no centro (área de luta)
+            const tatameMargin = 100;
+            const tatameWidth = GAME_WIDTH - (tatameMargin * 2);
+            const tatameHeight = GAME_HEIGHT - (tatameMargin * 2);
+            
+            ctx.fillStyle = '#7a6c4a'; // Cor base do tatame
+            ctx.fillRect(tatameMargin - camera.x, tatameMargin - camera.y, tatameWidth, tatameHeight);
+            
+            // Desenhar detalhes do tatame
+            ctx.fillStyle = '#8a7b57';
+            for (let x = tatameMargin; x < tatameWidth + tatameMargin; x += 40) {
+                for (let y = tatameMargin; y < tatameHeight + tatameMargin; y += 40) {
+                    // Bordas do tatame
+                    ctx.fillRect(x - camera.x, y - camera.y, 40, 2);
+                    ctx.fillRect(x - camera.x, y - camera.y, 2, 40);
+                    
+                    // Padrão central
+                    ctx.fillRect(x + 18 - camera.x, y + 18 - camera.y, 4, 4);
+                }
+            }
+            
+            // Bordas do tatame
+            ctx.strokeStyle = '#5a4c2a';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(tatameMargin - camera.x, tatameMargin - camera.y, tatameWidth, tatameHeight);
+            
+            // Desenhar suportes de parede decorativos
+            drawWallSupports();
+            
+            // Decorações
+            drawDecorations();
+        }
+        
+        function drawWallSupports() {
+            // Desenhar suportes de madeira nas paredes
+            ctx.fillStyle = '#5D4037'; // Marrom escuro
+            
+            // Superior
+            for (let x = 40; x < GAME_WIDTH - 40; x += 120) {
+                ctx.fillRect(x - camera.x, 20 - camera.y, 40, 15);
+                ctx.fillRect(x + 10 - camera.x, 5 - camera.y, 20, 15);
+            }
+            
+            // Inferior
+            for (let x = 40; x < GAME_WIDTH - 40; x += 120) {
+                ctx.fillRect(x - camera.x, GAME_HEIGHT - 35 - camera.y, 40, 15);
+                ctx.fillRect(x + 10 - camera.x, GAME_HEIGHT - 20 - camera.y, 20, 15);
+            }
+            
+            // Esquerda
+            for (let y = 40; y < GAME_HEIGHT - 40; y += 120) {
+                ctx.fillRect(20 - camera.x, y - camera.y, 15, 40);
+                ctx.fillRect(5 - camera.x, y + 10 - camera.y, 15, 20);
+            }
+            
+            // Direita
+            for (let y = 40; y < GAME_HEIGHT - 40; y += 120) {
+                ctx.fillRect(GAME_WIDTH - 35 - camera.x, y - camera.y, 15, 40);
+                ctx.fillRect(GAME_WIDTH - 20 - camera.x, y + 10 - camera.y, 15, 20);
+            }
+        }
+        
+        function drawDecorations() {
+            // Desenhar decorações do dojo
+            
+            // Bandeiras japonesas
+            const bannerWidth = 40;
+            const bannerHeight = 30;
+            
+            for (let i = 0; i < 3; i++) {
+                // Bandeira esquerda
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(30 - camera.x, 40 + i * 150 - camera.y, bannerWidth, bannerHeight);
+                
+                // Círculo vermelho (hinomaru)
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(30 + bannerWidth/2 - camera.x, 40 + i * 150 + bannerHeight/2 - camera.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bandeira direita
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(GAME_WIDTH - 30 - bannerWidth - camera.x, 40 + i * 150 - camera.y, bannerWidth, bannerHeight);
+                
+                // Círculo vermelho (hinomaru)
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(GAME_WIDTH - 30 - bannerWidth/2 - camera.x, 40 + i * 150 + bannerHeight/2 - camera.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Estante de armas (na parede inferior)
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(GAME_WIDTH / 2 - 80 - camera.x, GAME_HEIGHT - 40 - camera.y, 160, 15);
+            
+            // Armas na estante
+            ctx.fillStyle = '#AAAAAA'; // Cinza para espadas
+            for (let x = GAME_WIDTH / 2 - 70; x < GAME_WIDTH / 2 + 70; x += 20) {
+                // Espada
+                ctx.fillRect(x - camera.x, GAME_HEIGHT - 37 - camera.y, 2, 25);
+                
+                // Empunhadura
+                ctx.fillStyle = '#8B4513'; // Marrom
+                ctx.fillRect(x - 2 - camera.x, GAME_HEIGHT - 37 - camera.y, 6, 4);
+                
+                // Guarda
+                ctx.fillStyle = '#DDAA33'; // Dourado
+                ctx.fillRect(x - 3 - camera.x, GAME_HEIGHT - 33 - camera.y, 8, 2);
+                
+                ctx.fillStyle = '#AAAAAA'; // Voltar para cinza para a próxima espada
+            }
+            
+            // Lanternas japonesas
+            drawLanterns();
+            
+            // Esteira para meditação
+            ctx.fillStyle = '#9B7653';
+            ctx.fillRect(50 - camera.x, GAME_HEIGHT - 80 - camera.y, 40, 30);
+            
+            // Textura da esteira
+            ctx.fillStyle = '#8B6543';
+            for (let y = 0; y < 30; y += 5) {
+                ctx.fillRect(50 - camera.x, GAME_HEIGHT - 80 + y - camera.y, 40, 1);
+            }
+            
+            // Almofada de meditação
+            ctx.fillStyle = '#800000';
+            ctx.beginPath();
+            ctx.arc(70 - camera.x, GAME_HEIGHT - 65 - camera.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawLanterns() {
+            // Lanternas japonesas nas quatro esquinas
+            const lanternPositions = [
+                {x: 70, y: 70},
+                {x: GAME_WIDTH - 70, y: 70},
+                {x: 70, y: GAME_HEIGHT - 70},
+                {x: GAME_WIDTH - 70, y: GAME_HEIGHT - 70}
+            ];
+            
+            for (const pos of lanternPositions) {
+                // Corpo da lanterna
+                ctx.fillStyle = '#FF9800';
+                ctx.beginPath();
+                ctx.arc(pos.x - camera.x, pos.y - camera.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Luz interna (gradiente)
+                const gradient = ctx.createRadialGradient(
+                    pos.x - camera.x, pos.y - camera.y, 0,
+                    pos.x - camera.x, pos.y - camera.y, 15
+                );
+                gradient.addColorStop(0, 'rgba(255, 255, 200, 0.7)');
+                gradient.addColorStop(1, 'rgba(255, 150, 0, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(pos.x - camera.x, pos.y - camera.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Linhas horizontais decorativas
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(pos.x - 15 - camera.x, pos.y - camera.y);
+                ctx.lineTo(pos.x + 15 - camera.x, pos.y - camera.y);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(pos.x - 15 - camera.x, pos.y - 5 - camera.y);
+                ctx.lineTo(pos.x + 15 - camera.x, pos.y - 5 - camera.y);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(pos.x - 15 - camera.x, pos.y + 5 - camera.y);
+                ctx.lineTo(pos.x + 15 - camera.x, pos.y + 5 - camera.y);
+                ctx.stroke();
+                
+                // Suporte superior
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(pos.x - 5 - camera.x, pos.y - 22 - camera.y, 10, 7);
+                
+                // Corda
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(pos.x - camera.x, pos.y - 22 - camera.y);
+                ctx.lineTo(pos.x - camera.x, pos.y - 38 - camera.y);
+                ctx.stroke();
+            }
+        }
+        
+        function drawLighting() {
+            // Efeito de iluminação ambiente
+            const canvasGradient = ctx.createRadialGradient(
+                GAME_WIDTH/2, GAME_HEIGHT/2, 50, 
+                GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH/1.5
+            );
+            
+            canvasGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            canvasGradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+            
+            ctx.fillStyle = canvasGradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Luzes nas lanternas
+            const lanternPositions = [
+                {x: 70, y: 70},
+                {x: GAME_WIDTH - 70, y: 70},
+                {x: 70, y: GAME_HEIGHT - 70},
+                {x: GAME_WIDTH - 70, y: GAME_HEIGHT - 70}
+            ];
+            
+            for (const pos of lanternPositions) {
+                const lanternGradient = ctx.createRadialGradient(
+                    pos.x, pos.y, 10, 
+                    pos.x, pos.y, 70 + Math.sin(gameTime * 3) * 5
+                );
+                
+                lanternGradient.addColorStop(0, 'rgba(255, 200, 50, 0.2)');
+                lanternGradient.addColorStop(1, 'rgba(255, 150, 0, 0)');
+                
+                ctx.fillStyle = lanternGradient;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 100, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function updateCamera() {
+            // Seguir o jogador suavemente
+            const targetX = player.x + player.width/2 - GAME_WIDTH/2;
+            const targetY = player.y + player.height/2 - GAME_HEIGHT/2;
+            
+            // Suavizar movimento da câmera (easing)
+            camera.x += (targetX - camera.x) * 0.05;
+            camera.y += (targetY - camera.y) * 0.05;
+            
+            // Limitar a câmera aos limites do mapa
+            camera.x = Math.max(0, Math.min(camera.x, 0));
+            camera.y = Math.max(0, Math.min(camera.y, 0));
+            
+            // Atualizar tremor da câmera
+            if (camera.shake > 0) {
+                camera.x += (Math.random() - 0.5) * camera.shakeAmount;
+                camera.y += (Math.random() - 0.5) * camera.shakeAmount;
+                camera.shake--;
+            }
+            
+            // Atualizar zoom da câmera
+            camera.zoom += (camera.targetZoom - camera.zoom) * 0.05;
+        }
+        
+        function drawHUD() {
+            // Barra de vida com estilo aprimorado
+            const barWidth = 200;
+            const barHeight = 20;
+            const barX = 20;
+            const barY = 20;
+            
+            // Fundo da barra
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            
+            // Borda interna
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX + 1, barY + 1, barWidth - 2, barHeight - 2);
+            
+            // Cor da barra de vida baseada na quantidade de vida
+            let healthGradient = ctx.createLinearGradient(barX, barY, barX + player.health * 2, barY);
+            if (player.health > 70) {
+                healthGradient.addColorStop(0, 'rgba(0, 200, 0, 0.9)');
+                healthGradient.addColorStop(1, 'rgba(100, 255, 100, 0.9)');
+            } else if (player.health > 30) {
+                healthGradient.addColorStop(0, 'rgba(200, 200, 0, 0.9)');
+                healthGradient.addColorStop(1, 'rgba(255, 255, 100, 0.9)');
+            } else {
+                healthGradient.addColorStop(0, 'rgba(200, 0, 0, 0.9)');
+                healthGradient.addColorStop(1, 'rgba(255, 100, 100, 0.9)');
+            }
+            
+            ctx.fillStyle = healthGradient;
+            ctx.fillRect(barX + 2, barY + 2, player.health * 2 - 4, barHeight - 4);
+            
+            // Contorno da barra
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+            
+            // Texto de vida
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.fillText(`HP: ${player.health}`, barX + 5, barY + 15);
+            
+            // Pontuação com estilo
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(GAME_WIDTH - 120, 20, 100, 30);
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(GAME_WIDTH - 120, 20, 100, 30);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '18px Arial';
+            ctx.fillText(`SCORE: ${score}`, GAME_WIDTH - 110, 40);
+            
+            // Indicador de dash com estilo
+            const dashX = 20;
+            const dashY = 50;
+            const dashWidth = 100;
+            const dashHeight = 10;
+            
+            // Fundo do indicador de dash
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(dashX, dashY, dashWidth, dashHeight);
+            
+            // Cor do indicador de dash
+            if (player.dashCooldown === 0) {
+                const dashGradient = ctx.createLinearGradient(dashX, dashY, dashX + dashWidth, dashY);
+                dashGradient.addColorStop(0, 'rgba(0, 150, 255, 0.9)');
+                dashGradient.addColorStop(1, 'rgba(0, 200, 255, 0.9)');
+                
+                ctx.fillStyle = dashGradient;
+                ctx.fillRect(dashX + 1, dashY + 1, dashWidth - 2, dashHeight - 2);
+                
+                // Brilho quando pronto
+                ctx.fillStyle = 'rgba(200, 230, 255, 0.3)';
+                ctx.fillRect(dashX + 1, dashY + 1, dashWidth - 2, 2);
+            } else {
+                const dashReadyPercentage = 1 - (player.dashCooldown / player.dashMaxCooldown);
+                const dashGradient = ctx.createLinearGradient(dashX, dashY, dashX + dashWidth * dashReadyPercentage, dashY);
+                dashGradient.addColorStop(0, 'rgba(0, 100, 200, 0.7)');
+                dashGradient.addColorStop(1, 'rgba(0, 150, 200, 0.7)');
+                
+                ctx.fillStyle = dashGradient;
+                ctx.fillRect(dashX + 1, dashY + 1, dashWidth * dashReadyPercentage - 2, dashHeight - 2);
+            }
+            
+            // Contorno do indicador de dash
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(dashX, dashY, dashWidth, dashHeight);
+            
+            // Texto do indicador de dash
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial';
+            ctx.fillText('DASH', dashX + 38, dashY + 8);
+            
+            // Indicador de super dash (se ativo)
+            if (player.superDashMode) {
+                const superDashY = dashY + 15;
+                
+                // Fundo
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(dashX, superDashY, dashWidth, dashHeight);
+                
+                // Barra de progresso
+                const superDashPercentage = player.superDashTime / 600; // 10 segundos (60fps * 10)
+                const hue = (gameTime * 360) % 360;
+                
+                const superDashGradient = ctx.createLinearGradient(dashX, superDashY, dashX + dashWidth * superDashPercentage, superDashY);
+                superDashGradient.addColorStop(0, `hsla(${hue}, 100%, 60%, 0.9)`);
+                superDashGradient.addColorStop(1, `hsla(${hue + 60}, 100%, 70%, 0.9)`);
+                
+                ctx.fillStyle = superDashGradient;
+                ctx.fillRect(dashX + 1, superDashY + 1, dashWidth * superDashPercentage - 2, dashHeight - 2);
+                
+                // Contorno
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(dashX, superDashY, dashWidth, dashHeight);
+                
+                // Texto
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Arial';
+                ctx.fillText('SUPER', dashX + 34, superDashY + 8);
+            }
+        }
+        
+        function drawGameOver() {
+            // Efeito de escurecimento gradual
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Título "Game Over" estilizado
+            ctx.fillStyle = '#FF0000';
+            ctx.font = 'bold 70px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+            
+            // Sombra do texto
+            ctx.fillStyle = '#800000';
+            ctx.font = 'bold 70px Arial';
+            ctx.fillText('GAME OVER', GAME_WIDTH / 2 + 3, GAME_HEIGHT / 2 - 37);
+            
+            // Pontuação
+            ctx.fillStyle = 'white';
+            ctx.font = '30px Arial';
+            ctx.fillText(`Pontuação: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
+            
+            // Instruções para recomeçar
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = '20px Arial';
+            ctx.fillText('Clique para jogar novamente', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 70);
+            
+            ctx.textAlign = 'left'; // Restaurar alinhamento padrão
+        }
+        
+        // Inicialização do jogo
+        function initGame() {
+            player = new Player(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            enemies = [];
+            deadBodies = [];
+            bloodSplats = [];
+            arrows = [];
+            powerUps = [];
+            spectators = [];
+            gameTime = 0;
+            score = 0;
+            lastEnemySpawn = 0;
+            lastPowerUpSpawn = 0;
+            
+            // Criar espectadores
+            createSpectators();
+            
+            // Iniciar música de fundo
+            if (!bgMusic) {
+                bgMusic = createBgMusic();
+            }
+        }
+        
+        // Loop principal do jogo
+        function gameLoop() {
+            if (!player.isAlive) {
+                drawGameOver();
+                return;
+            }
+            
+            gameTime += 1/60; // Incrementar tempo (em segundos)
+            
+            // Atualizar câmera
+            updateCamera();
+            
+            // Limpar o canvas
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Desenhar elementos do jogo
+            drawBackground();
+            
+            // Desenhar manchas de sangue
+            for (const blood of bloodSplats) {
+                drawBloodSplat(blood);
+            }
+            
+            // Desenhar corpos mortos
+            for (const body of deadBodies) {
+                drawDeadBody(body);
+            }
+            
+            // Desenhar power-ups
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                powerUps[i].draw();
+            }
+            
+            // Atualizar e desenhar espectadores
+            for (const spectator of spectators) {
+                spectator.update();
+                spectator.draw();
+            }
+            
+            // Atualizar e desenhar flechas
+            for (let i = arrows.length - 1; i >= 0; i--) {
+                if (arrows[i].update()) {
+                    arrows.splice(i, 1);
+                } else {
+                    arrows[i].draw();
+                }
+            }
+            
+            // Atualizar e desenhar inimigos
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                if (enemies[i].update()) {
+                    enemies.splice(i, 1);
+                } else {
+                    enemies[i].draw();
+                }
+            }
+            
+            // Atualizar e desenhar jogador
+            player.update();
+            player.draw();
+            
+            // Efeitos de iluminação
+            //drawLighting();
+            
+            // Desenhar HUD
+            drawHUD();
+            
+            // Spawnar novos inimigos
+            if (gameTime - lastEnemySpawn > spawnInterval()) {
+                const numToSpawn = Math.min(5, Math.floor(gameTime / 30) + 1);
+                
+                for (let i = 0; i < numToSpawn; i++) {
+                    createEnemy(); // Tipo aleatório
+                }
+                
+                lastEnemySpawn = gameTime;
+            }
+            
+            // Spawnar power-up a cada 15 segundos
+            if (gameTime - lastPowerUpSpawn > 15) {
+                createPowerUp();
+                lastPowerUpSpawn = gameTime;
+            }
+            
+            // Limitar o número de manchas de sangue para desempenho
+            if (bloodSplats.length > 100) {
+                bloodSplats.shift(); // Remover a mancha mais antiga
+            }
+            
+            // Limitar o número de corpos mortos para desempenho
+            if (deadBodies.length > 50) {
+                deadBodies.shift(); // Remover o corpo mais antigo
+            }
+            
+            // Continuar o loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Função para calcular o intervalo de spawn baseado no tempo de jogo
+        function spawnInterval() {
+            // Reduzir o intervalo de spawn ao longo do tempo (mais difícil)
+            return Math.max(1, 5 - Math.floor(gameTime / 30));
+        }
+        
+        // Eventos
+        canvas.addEventListener('click', function(e) {
+            if (!player.isAlive) {
+                // Reiniciar o jogo se morto
+                initGame();
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Executar dash na direção do clique
+             player.dash(clickX + camera.x, clickY + camera.y);
+         });
+
+         // Adicionar listener para impedir scroll da página principal com teclas de controle
+         window.addEventListener('keydown', (event) => {
+             // Lista de teclas que podem causar scroll/ações indesejadas na página pai
+             // O jogo usa apenas clique, mas adicionamos isso para conformidade com os adendos
+             const keysToPrevent = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
+
+             if (keysToPrevent.includes(event.code)) {
+                 console.log(`Ninja Dojo Master: Impedindo ação padrão para ${event.code}`);
+                 event.preventDefault(); // Impede a ação padrão (scroll) E a propagação
+             }
+         });
+         
+         // Iniciar o jogo
+         initGame();
+        
+        // Mensagem inicial
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('NINJA DOJO MASTER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60);
+        
+        ctx.font = '20px Arial';
+        ctx.fillText('Clique para dar dash na direção do mouse', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        ctx.fillText('Corte os inimigos com seu dash', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30);
+        ctx.fillText('Colete power-ups para o super dash', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60);
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '18px Arial';
+        ctx.fillText('Clique para começar', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 120);
+        
+        // Começar o jogo no primeiro clique
+        let gameStarted = false;
+        canvas.addEventListener('click', function startGameHandler(e) {
+            if (!gameStarted) {
+                gameStarted = true;
+                gameLoop();
+                canvas.removeEventListener('click', startGameHandler);
+            }
+        });
+    </script>
+</body>
+</html>

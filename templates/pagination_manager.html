@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Paginação</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pagination_manager.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+</head>
+<body>
+    <h1>Gerenciador de Paginação</h1>
+    <a href="{{ url_for('index') }}" class="back-link">← Voltar para Lista</a>
+    <button id="save-pagination-btn" class="save-btn">Salvar Paginação</button>
+
+    <div class="sections-container">
+        {% for section_id, pages in sections_data.items() %}
+        <div class="section" id="section-{{ section_id }}" data-section-id="{{ section_id }}">
+            <h2>{{ section_id.replace('-', ' ').title() }}</h2>
+            <div class="pagination-controls">
+                {% if section_id != 'new-games' %}
+                <button class="add-page-btn" data-section="{{ section_id }}">+</button>
+                {% endif %}
+            </div>
+            <div class="pages-area {% if section_id != 'new-games' %}sortable-pages{% endif %}" data-section-id="{{ section_id }}">
+
+                {% if section_id == 'new-games' %}
+                    <div class="new-games-grid">
+                        {% for slot_data in pages %}
+                        <div class="game-slot icon-slot" data-game-id="{{ slot_data.id if slot_data.game else '' }}">
+                            {% if slot_data.game %}
+                                <img src="{{ url_for('static', filename=slot_data.game.imagePath) }}" alt="{{ slot_data.game.name }}" title="{{ slot_data.game.name }}" onerror="this.style.display='none';">
+                                <div class="slot-actions">
+                                    <button class="remove-btn" title="Remover Jogo">X</button>
+                                </div>
+                            {% else %}
+                                <div class="empty-slot">+</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% for page in pages %}
+                    <div class="page-group sortable-group">
+                        <div class="page-column">
+                            <h4>Coluna Esquerda</h4>
+                            <div class="game-slot large" data-game-id="{{ page.left_column.large.id if page.left_column.large.game else '' }}">
+                                {% if page.left_column.large.game %}
+                                    <img src="{{ url_for('static', filename=page.left_column.large.game.imagePath) }}" alt="Capa" onerror="this.style.display='none';">
+                                    <div class="game-details">
+                                        <strong>{{ page.left_column.large.game.name }}</strong>
+                                        <p>{{ page.left_column.large.game.description[:80] ~ '...' if page.left_column.large.game.description | length > 80 else page.left_column.large.game.description }}</p>
+                                    </div>
+                                    <div class="slot-actions">
+                                        <button class="remove-btn" title="Remover Jogo">X</button>
+                                    </div>
+                                {% else %}
+                                    <div class="empty-slot">+</div>
+                                {% endif %}
+                            </div>
+                            <div class="small-slots">
+                                <div class="game-slot small" data-game-id="{{ page.left_column.small1.id if page.left_column.small1.game else '' }}">
+                                     {% if page.left_column.small1.game %}
+                                        <img src="{{ url_for('static', filename=page.left_column.small1.game.imagePath) }}" alt="Capa" onerror="this.style.display='none';">
+                                        <div class="game-details">
+                                            <strong>{{ page.left_column.small1.game.name }}</strong>
+                                        </div>
+                                        <div class="slot-actions">
+                                            <button class="remove-btn" title="Remover Jogo">X</button>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-slot">+</div>
+                                    {% endif %}
+                                </div>
+                                <div class="game-slot small" data-game-id="{{ page.left_column.small2.id if page.left_column.small2.game else '' }}">
+                                     {% if page.left_column.small2.game %}
+                                        <img src="{{ url_for('static', filename=page.left_column.small2.game.imagePath) }}" alt="Capa" onerror="this.style.display='none';">
+                                        <div class="game-details">
+                                            <strong>{{ page.left_column.small2.game.name }}</strong>
+                                        </div>
+                                        <div class="slot-actions">
+                                            <button class="remove-btn" title="Remover Jogo">X</button>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-slot">+</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="page-column">
+                             <h4>Coluna Direita</h4>
+                             <div class="game-slot large" data-game-id="{{ page.right_column.large.id if page.right_column.large.game else '' }}">
+                                {% if page.right_column.large.game %}
+                                    <img src="{{ url_for('static', filename=page.right_column.large.game.imagePath) }}" alt="Capa" onerror="this.style.display='none';">
+                                    <div class="game-details">
+                                        <strong>{{ page.right_column.large.game.name }}</strong>
+                                        <p>{{ page.right_column.large.game.description[:80] ~ '...' if page.right_column.large.game.description | length > 80 else page.right_column.large.game.description }}</p>
+                                    </div>
+                                    <div class="slot-actions">
+                                        <button class="remove-btn" title="Remover Jogo">X</button>
+                                    </div>
+                                {% else %}
+                                    <div class="empty-slot">+</div>
+                                {% endif %}
+                            </div>
+                            <div class="small-slots">
+                                <div class="game-slot small" data-game-id="{{ page.right_column.small1.id if page.right_column.small1.game else '' }}">
+                                     {% if page.right_column.small1.game %}
+                                        <img src="{{ url_for('static', filename=page.right_column.small1.game.imagePath) }}" alt="Capa" onerror="this.style.display='none';">
+                                        <div class="game-details">
+                                            <strong>{{ page.right_column.small1.game.name }}</strong>
+                                        </div>
+                                        <div class="slot-actions">
+                                            <button class="remove-btn" title="Remover Jogo">X</button>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-slot">+</div>
+                                    {% endif %}
+                                </div>
+                                <div class="game-slot small" data-game-id="{{ page.right_column.small2.id if page.right_column.small2.game else '' }}">
+                                     {% if page.right_column.small2.game %}
+                                        <img src="{{ url_for('static', filename=page.right_column.small2.game.imagePath) }}" alt="Capa" onerror="this.style.display='none';">
+                                        <div class="game-details">
+                                            <strong>{{ page.right_column.small2.game.name }}</strong>
+                                        </div>
+                                        <div class="slot-actions">
+                                            <button class="remove-btn" title="Remover Jogo">X</button>
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-slot">+</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="page-group new-page-template" style="display: none;">
+                        <div class="page-column">
+                            <h4>Coluna Esquerda</h4>
+                            <div class="game-slot large empty-slot" data-game-id="">+</div>
+                            <div class="small-slots">
+                                <div class="game-slot small empty-slot" data-game-id="">+</div>
+                                <div class="game-slot small empty-slot" data-game-id="">+</div>
+                            </div>
+                        </div>
+                        <div class="page-column">
+                            <h4>Coluna Direita</h4>
+                            <div class="game-slot large empty-slot" data-game-id="">+</div>
+                            <div class="small-slots">
+                                <div class="game-slot small empty-slot" data-game-id="">+</div>
+                                <div class="game-slot small empty-slot" data-game-id="">+</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p>Nenhuma seção de paginação encontrada ou configurada.</p>
+        {% endfor %}
+    </div>
+
+    <div id="game-selection-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal-btn">×</span>
+            <h3>Selecionar Jogo</h3>
+            <ul id="game-list-for-selection">
+                 <p>Clique em um jogo abaixo para adicioná-lo ao slot selecionado.</p>
+                {% for game_id, game in all_games.items() %}
+                    <li data-game-id="{{ game_id }}"
+                        data-game-name="{{ game.name }}"
+                        data-game-image="{{ url_for('static', filename=game.imagePath) }}"
+                        data-game-description="{{ game.description }}"
+                        class="selectable-game-item">
+                        <img src="{{ url_for('static', filename=game.imagePath) }}" width="40" height="30" alt="">
+                        <span>{{ game.name }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const gameData = {{ all_games | tojson }}; // Dados dos jogos carregados do servidor
+            let targetSlotForModal = null;
+
+            const modal = document.getElementById('game-selection-modal');
+            const closeModalBtn = modal.querySelector('.close-modal-btn');
+            const gameListContainer = document.getElementById('game-list-for-selection');
+            const sectionsContainer = document.querySelector('.sections-container');
+
+            // Inicializa SortableJS para áreas de páginas que permitem ordenação
+            document.querySelectorAll('.pages-area').forEach(pagesArea => {
+                if (pagesArea.classList.contains('sortable-pages')) {
+                    new Sortable(pagesArea, {
+                        group: 'pages',
+                        animation: 150,
+                        handle: '.page-group',
+                        ghostClass: 'sortable-ghost-page',
+                        dragClass: 'sortable-drag-page',
+                        filter: '.new-page-template', // Impede que o template seja arrastado
+                        onEnd: function (evt) {
+                            console.log('Página movida');
+                        }
+                    });
+                }
+            });
+
+            // Botão para adicionar nova página (não aplicável a 'new-games')
+            document.querySelectorAll('.add-page-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    if (sectionId === 'new-games') return;
+
+                    const pagesArea = document.querySelector(`.pages-area[data-section-id="${sectionId}"]`);
+                    const template = document.querySelector(`#section-${sectionId} .new-page-template`);
+                    if (template && pagesArea) {
+                        const newPage = template.cloneNode(true);
+                        newPage.style.display = 'flex';
+                        newPage.classList.remove('new-page-template');
+                        newPage.classList.add('sortable-group');
+                        pagesArea.appendChild(newPage);
+                    } else {
+                        console.error("Não foi possível encontrar template ou área de páginas para a seção:", sectionId);
+                    }
+                });
+            });
+
+            // Delegação de eventos para botões de remover e slots vazios
+            if (sectionsContainer) {
+                sectionsContainer.addEventListener('click', function(event) {
+                    // Lida com cliques no botão de remover jogo
+                    if (event.target.classList.contains('remove-btn')) {
+                        event.stopPropagation();
+                        const gameSlot = event.target.closest('.game-slot');
+                        if (gameSlot) {
+                            gameSlot.dataset.gameId = '';
+                            gameSlot.innerHTML = '<div class="empty-slot">+</div>';
+                        }
+                    }
+                    // Lida com cliques em slots vazios para abrir o modal
+                    else if (event.target.classList.contains('empty-slot')) {
+                        targetSlotForModal = event.target.closest('.game-slot');
+                        if (targetSlotForModal) {
+                            modal.style.display = 'block';
+                        } else {
+                            console.warn("Não foi possível encontrar o slot pai para o slot vazio clicado.");
+                        }
+                    }
+                });
+            } else {
+                console.error("Não foi possível encontrar .sections-container para delegação de eventos.");
+            }
+
+            // Seleção de jogo a partir do modal
+            if (gameListContainer) {
+                gameListContainer.addEventListener('click', function(event) {
+                    const clickedLi = event.target.closest('li.selectable-game-item');
+                    if (!clickedLi || !targetSlotForModal) {
+                        return;
+                    }
+
+                    const gameId = clickedLi.dataset.gameId;
+                    const game = gameData[gameId];
+
+                    if (!game) {
+                        console.error("Dados do jogo não encontrados para o ID:", gameId);
+                        return;
+                    }
+
+                    targetSlotForModal.dataset.gameId = gameId;
+
+                    let slotHTML = '';
+                    if (targetSlotForModal.classList.contains('icon-slot')) {
+                        slotHTML = `
+                            <img src="${clickedLi.dataset.gameImage}" alt="${game.name}" title="${game.name}" onerror="this.style.display='none';">
+                            <div class="slot-actions">
+                                <button class="remove-btn" title="Remover Jogo">X</button>
+                            </div>
+                        `;
+                    } else {
+                        slotHTML = `
+                            <img src="${clickedLi.dataset.gameImage}" alt="Capa" onerror="this.style.display='none';">
+                            <div class="game-details">
+                                <strong>${game.name}</strong>
+                                ${targetSlotForModal.classList.contains('large') ? `<p>${(game.description || '').substring(0, 80)}${(game.description || '').length > 80 ? '...' : ''}</p>` : ''}
+                            </div>
+                            <div class="slot-actions">
+                                <button class="remove-btn" title="Remover Jogo">X</button>
+                            </div>
+                        `;
+                    }
+                    targetSlotForModal.innerHTML = slotHTML;
+
+                    modal.style.display = 'none';
+                    targetSlotForModal = null;
+                });
+            } else {
+                 console.error("Não foi possível encontrar o container #game-list-for-selection.");
+            }
+
+            // Lógica para fechar o modal
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                    targetSlotForModal = null;
+                });
+            }
+            window.addEventListener('click', function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                    targetSlotForModal = null;
+                }
+            });
+
+            // Botão para salvar a configuração da paginação
+            const saveButton = document.getElementById('save-pagination-btn');
+            if (saveButton) {
+                saveButton.addEventListener('click', function() {
+                    const config = {};
+                    document.querySelectorAll('.section').forEach(sectionEl => {
+                        const sectionId = sectionEl.dataset.sectionId;
+                        config[sectionId] = [];
+
+                        if (sectionId === 'new-games') {
+                            sectionEl.querySelectorAll('.new-games-grid .game-slot').forEach(slotEl => {
+                                config[sectionId].push(slotEl.dataset.gameId || null);
+                            });
+                        } else {
+                            sectionEl.querySelectorAll('.pages-area .page-group:not(.new-page-template)').forEach(groupEl => {
+                                const getSlotId = (columnIndex, slotSelector) => {
+                                    const column = groupEl.querySelector(`.page-column:nth-child(${columnIndex})`);
+                                    if (!column) return null;
+                                    const slot = column.querySelector(slotSelector);
+                                    return slot ? slot.dataset.gameId || null : null;
+                                };
+
+                                const pageData = {
+                                   left_column: {
+                                        large: getSlotId(1, '.game-slot.large'),
+                                        small1: getSlotId(1, '.small-slots .game-slot.small:nth-child(1)'),
+                                        small2: getSlotId(1, '.small-slots .game-slot.small:nth-child(2)')
+                                   },
+                                   right_column: {
+                                        large: getSlotId(2, '.game-slot.large'),
+                                        small1: getSlotId(2, '.small-slots .game-slot.small:nth-child(1)'),
+                                        small2: getSlotId(2, '.small-slots .game-slot.small:nth-child(2)')
+                                   }
+                                };
+                                config[sectionId].push(pageData);
+                            });
+                        }
+                    });
+
+                    // Envia a configuração para o backend
+                    fetch("{{ url_for('save_pagination') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(config),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message || "Resposta recebida");
+                        if(data.status !== 'success') {
+                            console.error("Falha ao salvar:", data);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao salvar paginação:', error);
+                        alert('Erro ao salvar paginação. Verifique o console.');
+                    });
+                });
+            } else {
+                console.error("Não foi possível encontrar o botão #save-pagination-btn.");
+            }
+
+            console.log("Gerenciador de paginação carregado.");
+        });
+    </script>
+</body>
+</html>

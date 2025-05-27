@@ -1,0 +1,108 @@
+/* --- Main Navigation --- */
+.main-nav {
+    background-color: #fb6b04;
+    background-image:
+         repeating-linear-gradient(
+             45deg,
+             rgba(0, 0, 0, 0.03),
+             rgba(0, 0, 0, 0.03) 2px,
+             rgba(255, 255, 255, 0.02) 2px,
+             rgba(255, 255, 255, 0.02) 6px
+         ),
+     linear-gradient(to top, #fb6b04, #fca40c);
+    padding: 0 10px;
+    border-top: 1px solid white;
+    border-bottom: 1px solid white;
+    box-shadow: 0 5px 5px -3px rgba(0,0,0,0.35);
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 35px;
+    font-family: "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+}
+
+.main-nav ul {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.main-nav li {
+    margin-right: 5px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.main-nav li a {
+    color: #fff;
+    font-weight: bold;
+    padding: 0 9px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+ .main-nav li:first-child a {
+    padding-right: 0;
+ }
+
+.main-nav li a:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+.main-nav li a .icon {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    vertical-align: middle;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><polygon points="3,2 7,5 3,8" fill="%23f58220" stroke="white" stroke-width="1.5"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+     -webkit-text-stroke: 0;
+     text-stroke: 0;
+}
+
+.main-nav li a .icon.home {
+     background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMCAyMHYtNmg0djZoNXYtOGgzTDEyIDMgMiAxMmgzdjh6IE0xNiA2LjYgVjUgSDE5IFY5LjMgWiIvPjwvc3ZnPg==');
+     background-size: contain;
+     background-repeat: no-repeat;
+     background-position: center;
+     -webkit-text-stroke: 0;
+     text-stroke: 0;
+     color: transparent;
+     width: 22px;
+     height: 22px;
+     margin-right: 10px;
+}
+
+.main-nav .favorites a {
+    color: #fff;
+    font-weight: bold;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    border-left: 1px solid rgba(255,255,255,0.2);
+}
+
+ .main-nav .favorites a:hover {
+     background-color: rgba(0, 0, 0, 0.1);
+     text-decoration: none;
+ }
+
+.main-nav .favorites .icon-star {
+    display: inline-block;
+    color: white;
+    margin-right: 5px;
+    font-size: 16px;
+    line-height: 1;
+}

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogar - Click Jogos</title>
+    <link rel="stylesheet" href="static/css/base.css">
+    <link rel="stylesheet" href="static/css/layout.css">
+    <link rel="stylesheet" href="static/css/nav.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <link rel="stylesheet" href="static/css/game-page.css">
+</head>
+<body>
+<div id="site-wrapper">
+    <header class="top-bar">
+        <div class="left-links">
+            <img src="static/images/logo-uol.gif" alt="UOL" title="UOL">
+            <span>Assine 0800 703 3000</span>
+            <span>SAC</span>
+            <a href="#">Bate-papo</a>
+            <a href="#">E-mail</a>
+            <a href="#">Notícias</a>
+            <a href="#">Esporte</a>
+            <a href="#">Entretenimento</a>
+            <a href="#">Estilo</a>
+            <a href="#">Shopping</a>
+        </div>
+        <div class="right-search">
+            <input type="text" placeholder="">
+            <button>BUSCAR</button>
+        </div>
+    </header>
+
+    <div class="logo-search-area">
+        <div class="logo-section">
+            <div class="logo">
+                 <img src="static/images/logo.png" alt="Click Jogos Logo" style="display: block; max-width: 100%; height: auto;">
+            </div>
+        </div>
+        <div class="counter">
+            <span class="tooltip-number">8.130</span>
+            <div class="plus-one-button">+1</div>
+        </div>
+        <div class="game-search">
+            <label for="game-search-input">BUSCAR JOGOS:</label>
+            <div class="search-input-wrapper">
+                <input type="text" id="game-search-input">
+                <button>buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html"><span class="icon home"></span></a></li>
+            <li><a href="#"><span class="icon"></span>Top Jogos</a></li>
+            <li><a href="#"><span class="icon"></span>Ação e Aventura</a></li>
+            <li><a href="#"><span class="icon"></span>Carros</a></li>
+            <li><a href="#"><span class="icon"></span>Esportes</a></li>
+            <li><a href="#"><span class="icon"></span>Puzzle</a></li>
+            <li><a href="#"><span class="icon"></span>Tiro</a></li>
+            <li><a href="#"><span class="icon"></span>Jogos de Meninas</a></li>
+            <li><a href="#"><span class="icon"></span>Download de Jogos</a></li>
+        </ul>
+        <div class="favorites">
+            <a href="#"><span class="icon-star">★</span> Meus Favoritos</a>
+        </div>
+    </nav>
+
+    <div class="game-page-content">
+        <div class="game-header">
+            <h1 id="game-title">Carregando Jogo...</h1>
+            <div class="breadcrumbs">
+                <a href="index.html">Jogos Online</a> » <a id="game-category-link" href="#"><span id="game-category-name">Categoria</span></a>
+            </div>
+        </div>
+
+        <div class="game-details-container">
+            <div class="game-description">
+                <p id="game-description">Carregando descrição...</p>
+                <div class="age-rating">
+                    <span class="rating-icon">L</span>
+                    <span class="rating-text">Livre para todos os públicos</span>
+                </div>
+                <div class="social-share">
+                </div>
+            </div>
+            <div class="game-controls">
+                <h2>Como Jogar:</h2>
+                <div id="game-controls-list">
+                </div>
+            </div>
+        </div>
+
+        <div class="game-toolbar">
+            <div class="toolbar-left">
+                <span class="fav-label">Meus Favoritos:</span>
+                <a href="#" class="fav-add"><span class="icon-star-add">⭐</span> adicionar</a>
+            </div>
+            <div class="toolbar-right">
+                <a href="#" id="restore-size-btn" class="restore-size" style="display: none;"><span class="icon-restore">🔄</span> restaurar</a>
+                <a href="#" id="zoom-out-btn" class="zoom-out"><span class="icon-zoom-out">➖</span> menor</a>
+                <a href="#" id="zoom-in-btn" class="zoom-in"><span class="icon-zoom-in">➕</span> maior</a>
+                <a href="#" id="fullscreen-btn" class="fullscreen"><span class="icon-fullscreen">↔️</span> tela cheia</a>
+            </div>
+        </div>
+
+        <div class="game-embed-container">
+            <div id="loading-overlay">
+                <div id="loading-background"></div>
+                <div id="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+            <iframe id="game-iframe" src="" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
+            <button id="exit-fullscreen-btn" class="exit-fullscreen-button" style="display: none;">Sair da Tela Cheia</button>
+        </div>
+
+        <section class="game-page-categories">
+            <div class="section-header">
+                <h2>Categorias</h2>
+                <a href="#" class="more-link"><span class="plus-icon">+</span>todas as categorias</a>
+            </div>
+            <div class="category-grid">
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos Famosos</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos de Desenhos</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos de Aviões</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos 3D</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos em Unity</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos de Filmes</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos de Manobras</a>
+                <a href="#"><img src="static/images/icons/icon_placeholder.png" alt=""> Jogos de Pontuação</a>
+            </div>
+        </section>
+
+        <section class="game-page-recommended">
+             <div class="section-header">
+                <h2>Jogos Recomendados</h2>
+                <a href="#" class="more-link"><span class="plus-icon">+</span>mais jogos recomendados</a>
+            </div>
+            <div class="recommended-grid">
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 1</a></h3><p>Description...</p></div>
+                </div>
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 2</a></h3><p>Description...</p></div>
+                </div>
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 3</a></h3><p>Description...</p></div>
+                </div>
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 4</a></h3><p>Description...</p></div>
+                </div>
+                 <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 5</a></h3><p>Description...</p></div>
+                </div>
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 6</a></h3><p>Description...</p></div>
+                </div>
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 7</a></h3><p>Description...</p></div>
+                </div>
+                <div class="game-item">
+                    <div class="game-image medium">Game Img</div>
+                    <div class="game-info"><h3><a href="#">Game Title 8</a></h3><p>Description...</p></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+</div>
+
+<script src="static/js/script.js"></script>
+<script src="static/js/games.js"></script>
+
+<script>
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingBackground = document.getElementById('loading-background');
+    const progressBar = document.getElementById('progress-bar');
+    const gameIframe = document.getElementById('game-iframe');
+    const gameTitleEl = document.getElementById('game-title');
+    const gameDescriptionEl = document.getElementById('game-description');
+    const gameControlsListEl = document.getElementById('game-controls-list');
+    const gameCategoryLinkEl = document.getElementById('game-category-link');
+    const gameCategoryNameEl = document.getElementById('game-category-name');
+    const ageRatingContainerEl = document.querySelector('.age-rating');
+    const ageRatingIconEl = ageRatingContainerEl.querySelector('.rating-icon');
+    const ageRatingTextEl = ageRatingContainerEl.querySelector('.rating-text');
+    const pageTitle = document.querySelector('title');
+
+    let progress = 0;
+    let intervalId = null;
+
+    function updateProgress() {
+        progress += Math.random() * 10 + 5;
+        if (progress >= 100) {
+            progress = 100;
+            progressBar.style.width = progress + '%';
+            clearInterval(intervalId);
+            setTimeout(hideOverlay, 300);
+        } else {
+            progressBar.style.width = progress + '%';
+        }
+    }
+
+    function populateGameData(gameData) {
+        if (!gameData) {
+            gameTitleEl.textContent = "Erro: Jogo não encontrado!";
+            return;
+        }
+
+        pageTitle.textContent = gameData.name + " - Click Jogos";
+        gameTitleEl.textContent = gameData.name;
+        gameDescriptionEl.textContent = gameData.description;
+        gameCategoryNameEl.textContent = gameData.category;
+        gameCategoryLinkEl.href = gameData.categoryLink;
+
+        populateAgeRating(gameData.ageRating);
+
+        gameControlsListEl.innerHTML = '';
+        gameData.controls.forEach(control => {
+            const p = document.createElement('p');
+            p.innerHTML = `<span>${control.key}</span> ${control.action}`;
+            gameControlsListEl.appendChild(p);
+        });
+
+        gameIframe.src = 'static/' + gameData.gamePath;
+        loadingBackground.style.backgroundImage = `url('static/${gameData.imagePath}')`;
+
+        startLoadingSimulation();
+    }
+
+    function hideOverlay() {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.visibility = 'hidden';
+            loadingOverlay.style.display = 'none';
+            gameIframe.style.visibility = 'visible';
+        }, 500);
+    }
+
+    function populateAgeRating(rating) {
+        const ratingsMap = {
+            "L": { text: "Livre para todos os públicos", className: "rating-l" },
+            "10": { text: "Não recomendado para menores de 10 anos", className: "rating-10" },
+            "12": { text: "Não recomendado para menores de 12 anos", className: "rating-12" },
+            "14": { text: "Não recomendado para menores de 14 anos", className: "rating-14" },
+            "16": { text: "Não recomendado para menores de 16 anos", className: "rating-16" },
+            "18": { text: "Não recomendado para menores de 18 anos", className: "rating-18" }
+        };
+        const defaultRating = ratingsMap["L"];
+        const selectedRating = ratingsMap[rating] || defaultRating;
+
+        ageRatingIconEl.textContent = rating || "L";
+        ageRatingTextEl.textContent = selectedRating.text;
+
+        ageRatingContainerEl.classList.remove(...Object.values(ratingsMap).map(r => r.className));
+        ageRatingContainerEl.classList.add(selectedRating.className);
+    }
+
+    function startLoadingSimulation() {
+        loadingOverlay.style.visibility = 'visible';
+        loadingOverlay.style.opacity = '1';
+        progress = 0;
+        progressBar.style.width = '0%';
+        intervalId = setInterval(updateProgress, 200);
+    }
+
+    const gameContainer = document.querySelector('.game-embed-container');
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const restoreSizeBtn = document.getElementById('restore-size-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
+
+    let initialWidth;
+    let initialHeight = 600;
+    const zoomStep = 0.1;
+    let currentScale = 1.0;
+
+    function updateSize(scale) {
+        if (!initialWidth) return;
+
+        const newWidth = initialWidth * scale;
+        const iframeInitialHeight = initialHeight;
+        const newHeight = iframeInitialHeight * scale;
+
+        const widthDifference = newWidth - initialWidth;
+        const marginLeftOffset = - (widthDifference / 2);
+
+        gameContainer.style.width = `${newWidth}px`;
+        gameContainer.style.marginLeft = `${marginLeftOffset}px`;
+        gameIframe.style.height = `${newHeight}px`;
+
+        restoreSizeBtn.style.display = (Math.abs(scale - 1.0) > 0.01) ? 'inline-flex' : 'none';
+    }
+
+    function setupToolbarListeners() {
+        zoomInBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentScale += zoomStep;
+            updateSize(currentScale);
+        });
+
+        zoomOutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentScale - zoomStep > 0.2) {
+                 currentScale -= zoomStep;
+                 updateSize(currentScale);
+            }
+        });
+
+        restoreSizeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentScale = 1.0;
+            gameContainer.style.width = '';
+            gameContainer.style.marginLeft = '';
+            gameIframe.style.height = `${initialHeight}px`;
+            restoreSizeBtn.style.display = 'none';
+        });
+
+        fullscreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            enterFullscreen();
+        });
+
+        exitFullscreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            exitFullscreen();
+        });
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    }
+
+    function enterFullscreen() {
+         if (gameIframe.requestFullscreen) {
+            gameIframe.requestFullscreen();
+        } else if (gameIframe.mozRequestFullScreen) {
+            gameIframe.mozRequestFullScreen();
+        } else if (gameIframe.webkitRequestFullscreen) {
+            gameIframe.webkitRequestFullscreen();
+        } else if (gameIframe.msRequestFullscreen) {
+            gameIframe.msRequestFullscreen();
+        }
+    }
+
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+
+    function handleFullscreenChange() {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        if (isFullscreen && isFullscreen === gameIframe) {
+            exitFullscreenBtn.style.display = 'block';
+            gameContainer.classList.add('is-fullscreen');
+        } else {
+            exitFullscreenBtn.style.display = 'none';
+            gameContainer.classList.remove('is-fullscreen');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initialWidth = gameContainer.offsetWidth;
+        initialHeight = parseInt(gameIframe.getAttribute('height')) || 600;
+        gameIframe.style.height = `${initialHeight}px`;
+
+        setupToolbarListeners();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameId = urlParams.get('game');
+
+        if (gameId) {
+            const gameData = getGameData(gameId);
+            if (gameData) {
+                populateGameData(gameData);
+            } else {
+                 gameTitleEl.textContent = "Erro: Jogo não encontrado (ID inválido).";
+            }
+        } else {
+            gameTitleEl.textContent = "Erro: ID do jogo não especificado na URL.";
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'ArrowUp' || event.code === 'ArrowDown') {
+                event.preventDefault();
+            }
+        });
+
+        document.body.addEventListener('click', (event) => {
+            if (gameIframe && !gameIframe.contains(event.target)) {
+                const clickedElementTag = event.target.tagName.toUpperCase();
+                const interactiveTags = ['BUTTON', 'INPUT', 'A', 'SELECT', 'TEXTAREA'];
+                const isLinkOrInsideLink = event.target.closest('a');
+
+                if (!interactiveTags.includes(clickedElementTag) && !isLinkOrInsideLink) {
+                    try {
+                        gameIframe.focus();
+                    } catch (e) {
+                        console.error("Error focusing iframe on click:", e);
+                    }
+                }
+            }
+        }, true);
+    });
+</script>
+
+</body>
+</html>

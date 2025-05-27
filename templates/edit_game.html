@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Jogo - {{ game.name }}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        textarea,
+        select { /* Added select */
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: sans-serif;
+            font-size: 1em;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        select { /* Style select */
+            height: 40px;
+            appearance: none;
+            background-color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 1em;
+            padding-right: 30px;
+        }
+        .current-image {
+            max-width: 150px;
+            max-height: 100px;
+            display: block;
+            margin-top: 10px;
+            border: 1px solid #eee;
+        }
+        .controls-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .button-group {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        a.back-link {
+            display: inline-block;
+            margin-left: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        a.back-link:hover {
+            text-decoration: underline;
+        }
+        .flash {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Jogo: {{ game.name }}</h1>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('save_game', game_id=game_id) }}" method="post">
+            <div class="form-group">
+                <label for="name">Nome:</label>
+                <input type="text" id="name" name="name" value="{{ game.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Descrição:</label>
+                <textarea id="description" name="description" required>{{ game.description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="imagePath">Caminho da Capa:</label>
+                <input type="text" id="imagePath" name="imagePath" value="{{ game.imagePath }}" required>
+                <img src="{{ game.imagePath }}" alt="Current Cover" class="current-image" onerror="this.style.display='none'; this.src='';"> <!-- Direct path -->
+            </div>
+
+            <div class="form-group">
+                <label for="controls">Controles:</label>
+                <textarea id="controls" name="controls">{{ controls_str }}</textarea>
+                <div class="controls-info">Formato: uma linha por controle, separando tecla e ação com dois pontos (ex: Setas:Move).</div>
+            </div>
+
+            <div class="form-group">
+                <label for="ageRating">Classificação Indicativa:</label>
+                <select id="ageRating" name="ageRating">
+                    {% for rating in available_ratings %}
+                        <option value="{{ rating }}" {% if game.ageRating == rating %}selected{% endif %}>
+                            {{ rating }}{% if rating == "L" %} (Livre){% elif rating != "L" %} anos{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button type="submit">Salvar Alterações</button>
+                <a href="{{ url_for('index') }}" class="back-link">Voltar para Lista</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
